@@ -1,0 +1,8 @@
+# depslib dependency file v1.0
+1715108169 source:d:\ssd backup\studium vorbereitung\snake_game\main.c
+	<stdio.h>
+	<stdlib.h>
+	<time.h>
+	<conio.h>
+	<windows.h>
+

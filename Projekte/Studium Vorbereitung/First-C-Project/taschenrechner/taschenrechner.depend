@@ -1,0 +1,11 @@
+# depslib dependency file v1.0
+1714558093 source:e:\studium vorbereitung\first-c-project\taschenrechner\taschenrechner.c
+	<stdio.h>
+	<conio.h>
+
+1714335178 source:e:\studium vorbereitung\first-c-project\taschenrechner\stars.c
+	<stdio.h>
+
+1714555296 source:e:\studium vorbereitung\first-c-project\taschenrechner\randomuebungen.c
+	<stdio.h>
+
