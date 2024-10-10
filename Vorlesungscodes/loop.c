@@ -9,5 +9,7 @@ int main(){
 		j=i+10;
 		printf("i=%d j=%d i+j=%d\n",i,j,add(i,j));
 	}
+
+	printf("Hallo Alex war hier und es hat geklappt");
 	return 0;
 }
