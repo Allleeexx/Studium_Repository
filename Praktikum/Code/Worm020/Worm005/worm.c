@@ -11,74 +11,70 @@
 #include <curses.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h> //zugriff auf bib stdbool,elemente true und false
 #include <time.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdbool.h>
+
 // ********************************************************************************************
 // Constants, data structures
 // ********************************************************************************************
 
-
 // Result codes of functions
-enum ResCodes{
-	RES_OK,             //0
-	RES_FAILED,         //1
+enum ResCodes {         //Erstelle einen Neuen "Datentypen" , wobei RES_OK Automatisch mit 0 def wird und dann jedes weitere +1
+  RES_OK,
+  RES_FAILED,
 };
-
 
 // Dimensions and bounds
 #define NAP_TIME    100   // Time in milliseconds to sleep between updates of display
 #define MIN_NUMBER_OF_ROWS  3   // The guaranteed number of rows available for the board
 #define MIN_NUMBER_OF_COLS 10   // The guaranteed number of columns available for the board
-#define WORM_LENGTH 20
+#define WORM_LENGTH 20 // maximale Wurmlange
+
+// ### Codes for the array of possitions ###
+// unused element in the worm arrays of positions
+#define UNUSED_POS_ELEM -1
 
 // Numbers for color pairs used by curses macro COLOR_PAIR
-//#define COLP_USER_WORM 1     -- Das ist das was davor war
-enum ColorPairs{
-    COLP_USER_WORM = 1,
-    COLP_FREE_CELL,
+enum ColorPairs {
+  COLP_USER_WORM = 1,
+  COLP_FREE_CELL,
 };
 
 // Symbols to display
 #define SYMBOL_FREE_CELL ' '
 #define SYMBOL_WORM_INNER_ELEMENT '0'
 
-// ### Codes for the array of positions ###
-// Unused element in the worm arrays of positions
-#define UNUSED_POS_ELEM -1
-
 // Game state codes
 enum GameStates {
-    WORM_GAME_ONGOING,
-    WORM_OUT_OF_BOUNDS,
-    WORM_CROSSING,
-    WORM_GAME_QUIT,
+  WORM_GAME_ONGOING,
+  WORM_OUT_OF_BOUNDS, // Left screen
+  WORM_CROSSING,
+  WORM_GAME_QUIT,     // user likes to quit
 };
 
 // Directions for the worm
-enum WormHeading{
-    WORM_UP,
-    WORM_DOWN,
-    WORM_LEFT,
-    WORM_RIGHT,
+enum WormHeading {
+  WORM_UP,
+  WORM_DOWN,
+  WORM_LEFT,
+  WORM_RIGHT,
+  WORM_LEFT_UP,
+  WORM_RIGHT_UP,
+  WORM_LEFT_DOWN,
+  WORM_RIGHT_DOWN,
 };
 
 // ********************************************************************************************
 // Global variables
 // ********************************************************************************************
 
-//Last usable index into the arrays
-//theworm_wormpos_y and theworm_wormpos_x
-int theworm_maxindex;
-
-//An index into the array for the worm's head position
-// 0 <= theworm_headindex <= the worm_maxidnex
-int theworm_headindex;
-
 // Data defining the worm
-int theworm_wormpos_y[WORM_LENGTH];  // y-coordinate of the worm's head
-int theworm_wormpos_x[WORM_LENGTH];  // x-coordinate of the worm's head
+int theworm_wormpos_y[WORM_LENGTH];  // Array das von y Koordinaten (groeße 20)
+int theworm_wormpos_x[WORM_LENGTH];  // Array das von x Koordinaten (groeße 20)
+int theworm_maxindex; //letzte möglich verwendbare spalten/zeilen in en Arrays
+int theworm_headindex; //Index speichern, in der die Koordinaten des Kopfes gespeichert sind
 
 // The current heading of the worm
 // These are offsets from the set {-1,0,+1}
@@ -107,12 +103,13 @@ void cleanupCursesApp(void);
 void placeItem(int y, int x, chtype symbol, enum ColorPairs color_pair);
 int getLastRow();
 int getLastCol();
-void cleanWormTail();
 
 // Functions concerning the management of the worm data
 enum ResCodes initializeWorm(int len_max, int headpos_y, int headpos_x, enum WormHeading dir, enum ColorPairs color);
 void showWorm();
+void cleanWormTail();
 void moveWorm(enum GameStates* agame_state);
+bool isInUseByWorm(int new_headpos_y, int new_heapos_x);
 void setWormHeading(enum WormHeading dir);
 
 // ********************************************************************************************
@@ -127,8 +124,8 @@ void setWormHeading(enum WormHeading dir);
 void initializeColors() {
     // Define colors of the game
     start_color();
-    init_pair(COLP_USER_WORM,     COLOR_GREEN,    COLOR_BLACK);
-    init_pair(COLP_FREE_CELL,	  COLOR_BLACK,	  COLOR_BLACK);
+    init_pair(COLP_USER_WORM,    COLOR_GREEN /*@002*/,    COLOR_BLACK);
+    init_pair(COLP_FREE_CELL,    COLOR_BLACK,             COLOR_BLACK);
 }
 
 void readUserInput(enum GameStates* agame_state ) {
@@ -145,19 +142,33 @@ void readUserInput(enum GameStates* agame_state ) {
                 setWormHeading(WORM_UP);
                 break;
             case KEY_DOWN :// User wants down
-                setWormHeading(WORM_DOWN);
+                setWormHeading(WORM_DOWN); /*@012*/
                 break;
             case KEY_LEFT :// User wants left
-                setWormHeading(WORM_LEFT);
+                setWormHeading(WORM_LEFT); /*@012*/
                 break;
             case KEY_RIGHT :// User wants right
-                setWormHeading(WORM_RIGHT);
+                setWormHeading(WORM_RIGHT); /*@012*/
                 break;
+
+            case 'w' : // schräg nach links oben
+                setWormHeading(WORM_LEFT_UP);
+                break;
+            case 'd' : // schräg nach rechts oben
+                setWormHeading(WORM_RIGHT_UP);
+                break;
+            case 'a' : // schräg links unten
+                setWormHeading(WORM_LEFT_DOWN);
+                break;
+            case 'x' : // schräg unten rechts
+                setWormHeading(WORM_RIGHT_DOWN);
+                break;
+
             case 's' : // User wants single step
-                nodelay(stdscr, FALSE);  // We simply make getch blocking
+                nodelay(stdscr,FALSE); //@013  We simply make getch blocking
                 break;
             case ' ' : // Terminate single step; make getch non-blocking again
-                nodelay(stdscr, TRUE);   // Make getch non-blocking again
+                nodelay(stdscr,TRUE); // @013   Make getch non-blocking again
                 break;
         }
     }
@@ -167,8 +178,8 @@ void readUserInput(enum GameStates* agame_state ) {
 enum ResCodes doLevel() {
     enum GameStates game_state; // The current game_state
 
-    int res_code; // Result code from functions
-    int end_level_loop;    // Indicates whether we should leave the main loop
+    enum ResCodes res_code; // Result code from functions
+    bool end_level_loop;    // Indicates whether we should leave the main loop
 
     int bottomLeft_y, bottomLeft_x;   // Start positions of the worm
 
@@ -188,27 +199,28 @@ enum ResCodes doLevel() {
     // Show worm at its initial position
     showWorm();
 
+
     // Display all what we have set up until now
     refresh();
 
     // Start the loop for this level
     end_level_loop = false; // Flag for controlling the main loop
-    while(!end_level_loop) {
+    while(!end_level_loop) {        //solange es nicht gleich false ist(also true)
         // Process optional user input
         readUserInput(&game_state); 
         if ( game_state == WORM_GAME_QUIT ) {
-            end_level_loop = true;
+            end_level_loop = true; // @014
             continue; // Go to beginning of the loop's block and check loop condition
         }
 
         // Process userworm
-	// Clean the tail of the worm
-	cleanWormTail();
+        // Clean the tail of the worm
+        cleanWormTail();
         // Now move the worm for one step
-        moveWorm(&game_state);
+        moveWorm(&game_state /*@015*/);
         // Bail out of the loop if something bad happened
         if ( game_state != WORM_GAME_ONGOING ) {
-            end_level_loop = true;
+            end_level_loop = true; // @016;
             continue; // Go to beginning of the loop's block and check loop condition
         }
         // Show the worm at its new position
@@ -232,7 +244,7 @@ enum ResCodes doLevel() {
     // There is no user feedback at the moment!
 
     // Normal exit point
-    return 0;
+    return res_code; // @017
 }
 
 // *********************************************
@@ -276,7 +288,7 @@ void placeItem(int y, int x, chtype symbol, enum ColorPairs color_pair) {
     //  Store item on the display (symbol code)
     move(y, x);                         // Move cursor to (y,x)
     attron(COLOR_PAIR(color_pair));     // Start writing in selected color
-    addch(1);                      // Store symbol on the virtual display   || Hier stand davor @006 statt attron
+    addch(symbol /*@006*/);                      // Store symbol on the virtual display
     attroff(COLOR_PAIR(color_pair));    // Stop writing in selected color
 }
 
@@ -284,12 +296,12 @@ void placeItem(int y, int x, chtype symbol, enum ColorPairs color_pair) {
 
 // Get the last usable row on the display
 int getLastRow() {
-    return LINES-1;
+    return (LINES-1); //@003;
 }
 
 // Get the last usable column on the display
 int getLastCol() {
-    return COLS-1;
+    return (COLS-1); // @004
 }
 
 // *****************************************************
@@ -300,37 +312,35 @@ int getLastCol() {
 // The following functions all depend on the model of the worm
 
 // Initialize the worm
-enum ResCodes initializeWorm(int len_max, int headpos_y, int headpos_x, enum WormHeading dir, enum ColorPairs color) {
+enum ResCodes initializeWorm(int len_max /*maximale lange des Wurms*/, int headpos_y, int headpos_x, enum WormHeading dir, enum ColorPairs color) {
+    // Local variables for loops , intialisiere wurm passiert einmal
+  
+    // Initialize last usable index to len_max -1
+    // theworm_maxindex
+    theworm_maxindex = len_max-1; //Weil beim Index zahlen auch bei 0 beginnt
 
-    //Local variables for loop etc.
-    int i;
+    // Initalize headindex
+    // theworm_headindex
+    theworm_headindex = 0;
 
-   // Initialize last usable index to len_max -1
-   // theworm_maxindex
-   theworm_maxindex = len_max -1;
-
-   // Initialize headindex
-   // theworm_headindex
-   theworm_headindex = 0;
-
-   // Mark all elements as unused in the arrays of positions
-   // theworm_wormpos_y[] and theworm_wormpos_x[]
-   // An unused position in the array is marked
-   // with code UNUSED_POS_ELEM
-   for(i = 0; i<= theworm_maxindex; i++){
-	theworm_wormpos_x[i] = UNUSED_POS_ELEM; 
-	theworm_wormpos_y[i] = UNUSED_POS_ELEM; 
-   }
+    // Mark all elements as unused in the arrays of positions
+    // theworm_wormpos_y[] and thewormpos_x[]
+    // An unused position in the array is marked
+    // with code UNUSED_POS_ELEM
+    for (int i=0; i<= theworm_maxindex; i++) {
+      theworm_wormpos_y[i]= UNUSED_POS_ELEM; // befülle das Array mit Unused, da wir noch nix befüllt haben
+      theworm_wormpos_x[i] = UNUSED_POS_ELEM;
+    }
 
     // Initialize position of worms head
-    theworm_wormpos_x[theworm_headindex] = headpos_y;
-    theworm_wormpos_y[theworm_headindex] = headpos_x;
+    theworm_wormpos_y[theworm_headindex] = headpos_y; // das array an der stelle des Headindexes soll befüllt werden mit der y koordinate
+    theworm_wormpos_x[theworm_headindex] = headpos_x;
 
     // Initialize the heading of the worm
-    setWormHeading(dir);
+    setWormHeading(dir); /* @009*/
+
     // Initialze color of the worm
     theworm_wcolor = color;
-
     return RES_OK;
 }
 
@@ -340,88 +350,119 @@ void showWorm() {
     // Due to our encoding we just need to show the head element
     // All other elements are already displayed
     placeItem(
-            theworm_wormpos_x[theworm_headindex] , //hier stand theworm_headpos_x 
-            theworm_wormpos_y[theworm_headindex] , //hier stand theworm_headpos_y
+            theworm_wormpos_y[theworm_headindex] ,
+            theworm_wormpos_x[theworm_headindex] /* @007*/,
             SYMBOL_WORM_INNER_ELEMENT,theworm_wcolor);
 }
 
-//Function for cleanWormTail()
 void cleanWormTail(){
-    int tailindex;
+  int tailindex;
+  // Compute tailindex
+  tailindex = (theworm_headindex + 1) % (theworm_maxindex +1);
 
-    // Compute tailindex    IndexSchwanzPos = (IndexKopfPos + 1) modulo MaxWurmLänge
-    tailindex = (theworm_headindex + 1) % len_max;
- 
-    // Check the array of worm elements
-    // Is the array element at tailindex already in use?
-    // Checking either array theworm_wormpos_y or the worm_wormpos_x is enough.
-
-    if(theworm_wormpos_x[tailindex]){
-	//YES:     y-    X-    place a SYMBOL_FREE_CELL at the tail's position
-	placeItem(theworm_wormpos_x[tailindex], theworm_wormpos_y[tailindex], SYMBOL_FREE_CELL, COLP_FREE_CELL);
-    }
+  //Check the array of the worm elements.
+  //Is the array element at tailindex already in use?
+  //Checking either array the_wormpos_y
+  //or theworm_wormpos_x is enough.
+  if (theworm_wormpos_y[tailindex] != UNUSED_POS_ELEM) {
+    //YES: place a SYMBOL_FREE_CELL at the tails positions
+    placeItem(theworm_wormpos_y[tailindex], theworm_wormpos_x[tailindex], 
+    SYMBOL_FREE_CELL, COLP_FREE_CELL); //Das ist nur visuell, die Daten vom Tail sind immernoch in der Tabelle
+  } 
 }
 
 void moveWorm(enum GameStates* agame_state) {
-
-    @010;
-    // Get the current position of the worm's head emelemnt and 
-    // Compute the new head position according to current heading.
-    // Do not store the new head position in teh array of positions, yet.
-    theworm_headpos_y += theworm_dy;
-    theworm_headpos_x += theworm_dx;
+    // Compute and store new head position according to current heading.
+    int headpos_x = theworm_wormpos_x[theworm_headindex] + theworm_dx;
+    int headpos_y = theworm_wormpos_y[theworm_headindex] + theworm_dy;
 
     // Check if we would leave the display if we move the worm's head according
     // to worm's last direction.
     // We are not allowed to leave the display's window.
-    if (theworm_headpos_x < 0) {
+
+    if (headpos_x < 0) {
         *agame_state = WORM_OUT_OF_BOUNDS;
-    } else if (theworm_headpos_x > getLastCol() ) { 
-        *agame_state = WORM_OUT_OF_BOUNDS;
-    } else if (theworm_headpos_y < 0) {  
-        *agame_state = WORM_OUT_OF_BOUNDS;
-	} else if (theworm_headpos_y > getLastRow() ) {
-        *agame_state = WORM_OUT_OF_BOUNDS;
+    } else if (headpos_x > getLastCol() ) { 
+        *agame_state = WORM_OUT_OF_BOUNDS; /*@011*/
+    } else if (headpos_y < 0) {  
+        *agame_state = WORM_OUT_OF_BOUNDS; /* @011*/
+	} else if (headpos_y > getLastRow() ) {
+        *agame_state = WORM_OUT_OF_BOUNDS; /*@011*/
     } else {
         // We will stay within bounds.
-	// check fi the worm's head will collide with itself at the new position
-	if(isInUseByWorm(headpos_y, headpos_x)){
-	 	//That's bad: stop game
-		*agame_state = WORM_CROSSING;
-	}
+        // Check if the worm's head will collide with itself at the new position
+        if (isInUseByWorm(headpos_y, headpos_x)) {
+          // Thats bad: stop the game
+          *agame_state = WORM_CROSSING;
+        }
     }
+    
+    // Check the status of *agame_state
+    // Go on if nothing bad happened
+    if ( *agame_state == WORM_GAME_ONGOING) {
+      //So all is well: we did not hit anything bad and did not leave the window. --> Update worm structure
+      //Increment the worm_headindex
+      //Go round if end of the worm is reached (ring buffer)
+      theworm_headindex = (theworm_headindex +1) % (theworm_maxindex +1);
 
-    // Check the status of *agmae_state
-    // Go on if notrhing bad happened
-    if ( *agame_state == WORM_GAME_ONGOING){
-	// So all is well: we did not hit anything bad and did not leave the window --> Update the worm structure.
-	// Increment theworm_headindex
-	// Go round if end of worm is readched ( Ring buffer)
-	theworm_headindex = theworm_headindex + 1;
-	// Store new coordinated of head element in worm structure
-	theworm_wormpos_x[theworm_headindex] = theworm_headpos_x;
-	theworm_wormpos_y[theworm_headindex] = theworm_headpos_y;
+      // Store new corrdinates of head element in worm structure
+      theworm_wormpos_x[theworm_headindex] = headpos_x;
+      theworm_wormpos_y[theworm_headindex] = headpos_y;
     }
+}
+
+bool isInUseByWorm(int new_headpos_y, int new_headpos_x) {
+    int i;
+    bool collision = false;
+    i = theworm_headindex;
+    do{                              //Do while = TUE ES EINMAL bevor du die Bedingung durchgehst, bei while wird die bedingung direkt beim ersten durchgehen gecheckt
+      // Compare the position of the currrent worm element with the new_headpos
+      if(theworm_wormpos_y[i] == new_headpos_y && theworm_wormpos_x[i] == new_headpos_x) {
+        collision = true; 
+      } 
+      i= (i+1) % (theworm_maxindex +1);
+    }
+    while (i != theworm_headindex ); // die x koordinate dürfen nicht gleich sein, aber die y schon (gleiche hohe)
+    // return what we found out.
+    return collision;
+
 }
 
 // Setters
 void setWormHeading(enum WormHeading dir) {
     switch(dir) {
-        case WORM_UP :// User wants up
+        case WORM_UP :    // User wants up
             theworm_dx=0;
             theworm_dy=-1;
             break;
-        case WORM_DOWN :// User wants down
-            theworm_dx=0;
+        case WORM_DOWN :  // User wants down
+            theworm_dx=0; // @005;
+            theworm_dy=+1; // @005;
+            break;
+        case WORM_LEFT :  //@005, User wants left
+            theworm_dx=-1; // @005
+            theworm_dy=0; // @005
+            break;
+        case WORM_RIGHT : // @005, User wants right
+           theworm_dx=+1; // @005
+           theworm_dy=0; // @005
+            break;
+
+        case WORM_LEFT_UP :
+            theworm_dx=-1;
+            theworm_dy=-1;
+            break;
+        case WORM_RIGHT_UP :
+            theworm_dx=+1;
+            theworm_dy=-1;
+            break;
+        case WORM_LEFT_DOWN :
+            theworm_dx=-1;
             theworm_dy=+1;
             break;
-        case WORM_LEFT      :// User wants left
-            theworm_dx=-1;
-            theworm_dy=0;
-            break;
-        case WORM_RIGHT      :// User wants right
+        case WORM_RIGHT_DOWN :
             theworm_dx=+1;
-            theworm_dy=0;
+            theworm_dy=+1;
             break;
     }
 } 
@@ -435,6 +476,10 @@ void setWormHeading(enum WormHeading dir) {
 
 int main(void) {
     int res_code;         // Result code from functions
+    
+    //printf("press key to continue\n");
+    getchar(); // start pogramm, give debugger a chance to attach, waits for eingabe
+
 
     // Here we start
     initializeCursesApplication();  // Init various settings of our application
@@ -458,5 +503,5 @@ int main(void) {
         cleanupCursesApp();
     }
 
-    return 0;
+    return res_code; //*@001
 }
