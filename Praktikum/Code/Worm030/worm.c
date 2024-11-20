@@ -16,55 +16,23 @@
 #include <string.h>
 #include <unistd.h>
 
+
+//Einfügen der Header Dateien
+#include "prep.h"
+#include "worm.h"
+#include "board_model.h"
+#include "worm_model.h"
+
 // ********************************************************************************************
 // Constants, data structures
 // ********************************************************************************************
 
-// Result codes of functions
-enum ResCodes {         //Erstelle einen Neuen "Datentypen" , wobei RES_OK Automatisch mit 0 def wird und dann jedes weitere +1
-  RES_OK,
-  RES_FAILED,
-};
 
-// Dimensions and bounds
-#define NAP_TIME    100   // Time in milliseconds to sleep between updates of display
-#define MIN_NUMBER_OF_ROWS  3   // The guaranteed number of rows available for the board
-#define MIN_NUMBER_OF_COLS 10   // The guaranteed number of columns available for the board
-#define WORM_LENGTH 20 // maximale Wurmlange
 
-// ### Codes for the array of possitions ###
-// unused element in the worm arrays of positions
-#define UNUSED_POS_ELEM -1
 
-// Numbers for color pairs used by curses macro COLOR_PAIR
-enum ColorPairs {
-  COLP_USER_WORM = 1,
-  COLP_FREE_CELL,
-};
-
-// Symbols to display
-#define SYMBOL_FREE_CELL ' '
-#define SYMBOL_WORM_INNER_ELEMENT '0'
-
-// Game state codes
-enum GameStates {
-  WORM_GAME_ONGOING,
-  WORM_OUT_OF_BOUNDS, // Left screen
-  WORM_CROSSING,
-  WORM_GAME_QUIT,     // user likes to quit
-};
 
 // Directions for the worm
-enum WormHeading {
-  WORM_UP,
-  WORM_DOWN,
-  WORM_LEFT,
-  WORM_RIGHT,
-  WORM_LEFT_UP,
-  WORM_RIGHT_UP,
-  WORM_LEFT_DOWN,
-  WORM_RIGHT_DOWN,
-};
+
 
 // ********************************************************************************************
 // Global variables
@@ -81,7 +49,7 @@ int theworm_headindex; //Index speichern, in der die Koordinaten des Kopfes gesp
 int theworm_dx;
 int theworm_dy;
 
-enum ColorPairs theworm_wcolor; 
+enum ColorPairs theworm_wcolor;
 
 // ********************************************************************************************
 // Forward declarations of functions
@@ -94,23 +62,11 @@ void initializeColors();
 void readUserInput(enum GameStates* agame_state );
 enum ResCodes doLevel();
 
-// Standard curses initialization and cleanup
-void initializeCursesApplication(); 
-void cleanupCursesApp(void);
 
-// Placing and removing items from the game board
-// Check boundaries of game board
-void placeItem(int y, int x, chtype symbol, enum ColorPairs color_pair);
-int getLastRow();
-int getLastCol();
 
-// Functions concerning the management of the worm data
-enum ResCodes initializeWorm(int len_max, int headpos_y, int headpos_x, enum WormHeading dir, enum ColorPairs color);
-void showWorm();
-void cleanWormTail();
-void moveWorm(enum GameStates* agame_state);
-bool isInUseByWorm(int new_headpos_y, int new_heapos_x);
-void setWormHeading(enum WormHeading dir);
+
+
+
 
 // ********************************************************************************************
 // Functions
@@ -207,7 +163,7 @@ enum ResCodes doLevel() {
     end_level_loop = false; // Flag for controlling the main loop
     while(!end_level_loop) {        //solange es nicht gleich false ist(also true)
         // Process optional user input
-        readUserInput(&game_state); 
+        readUserInput(&game_state);
         if ( game_state == WORM_GAME_QUIT ) {
             end_level_loop = true; // @014
             continue; // Go to beginning of the loop's block and check loop condition
@@ -314,7 +270,7 @@ int getLastCol() {
 // Initialize the worm
 enum ResCodes initializeWorm(int len_max /*maximale lange des Wurms*/, int headpos_y, int headpos_x, enum WormHeading dir, enum ColorPairs color) {
     // Local variables for loops , intialisiere wurm passiert einmal
-  
+
     // Initialize last usable index to len_max -1
     // theworm_maxindex
     theworm_maxindex = len_max-1; //Weil beim Index zahlen auch bei 0 beginnt
@@ -366,9 +322,9 @@ void cleanWormTail(){
   //or theworm_wormpos_x is enough.
   if (theworm_wormpos_y[tailindex] != UNUSED_POS_ELEM) {
     //YES: place a SYMBOL_FREE_CELL at the tails positions
-    placeItem(theworm_wormpos_y[tailindex], theworm_wormpos_x[tailindex], 
+    placeItem(theworm_wormpos_y[tailindex], theworm_wormpos_x[tailindex],
     SYMBOL_FREE_CELL, COLP_FREE_CELL); //Das ist nur visuell, die Daten vom Tail sind immernoch in der Tabelle
-  } 
+  }
 }
 
 void moveWorm(enum GameStates* agame_state) {
@@ -382,9 +338,9 @@ void moveWorm(enum GameStates* agame_state) {
 
     if (headpos_x < 0) {
         *agame_state = WORM_OUT_OF_BOUNDS;
-    } else if (headpos_x > getLastCol() ) { 
+    } else if (headpos_x > getLastCol() ) {
         *agame_state = WORM_OUT_OF_BOUNDS; /*@011*/
-    } else if (headpos_y < 0) {  
+    } else if (headpos_y < 0) {
         *agame_state = WORM_OUT_OF_BOUNDS; /* @011*/
 	} else if (headpos_y > getLastRow() ) {
         *agame_state = WORM_OUT_OF_BOUNDS; /*@011*/
@@ -396,7 +352,7 @@ void moveWorm(enum GameStates* agame_state) {
           *agame_state = WORM_CROSSING;
         }
     }
-    
+
     // Check the status of *agame_state
     // Go on if nothing bad happened
     if ( *agame_state == WORM_GAME_ONGOING) {
@@ -418,8 +374,8 @@ bool isInUseByWorm(int new_headpos_y, int new_headpos_x) {
     do{                              //Do while = TUE ES EINMAL bevor du die Bedingung durchgehst, bei while wird die bedingung direkt beim ersten durchgehen gecheckt
       // Compare the position of the currrent worm element with the new_headpos
       if(theworm_wormpos_y[i] == new_headpos_y && theworm_wormpos_x[i] == new_headpos_x) {
-        collision = true; 
-      } 
+        collision = true;
+      }
       i= (i+1) % (theworm_maxindex +1);
     }
     while (i != theworm_headindex ); // die x koordinate dürfen nicht gleich sein, aber die y schon (gleiche hohe)
@@ -465,7 +421,7 @@ void setWormHeading(enum WormHeading dir) {
             theworm_dy=+1;
             break;
     }
-} 
+}
 
 // END WORM_DETAIL
 // ********************************************************************************************
@@ -476,7 +432,7 @@ void setWormHeading(enum WormHeading dir) {
 
 int main(void) {
     int res_code;         // Result code from functions
-    
+
     //printf("press key to continue\n");
     getchar(); // start pogramm, give debugger a chance to attach, waits for eingabe
 

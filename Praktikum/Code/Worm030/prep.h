@@ -12,5 +12,8 @@
 #ifndef _PREP_H
 #define _PREP_H
 
+// Standard curses initialization and cleanup
+void initializeCursesApplication();
+void cleanupCursesApp(void);
 
 #endif  // #define _PREP_H
