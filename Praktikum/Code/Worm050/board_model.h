@@ -15,6 +15,13 @@
 #include <curses.h>
 #include "worm.h"
 
+//Postiotions on the board
+struct pos{
+    int y;
+    int x;
+};
+
+
 // Placing and removing items from the game board
 // Check boundaries of game board
 extern void placeItem(int y, int x, chtype symbol, enum ColorPairs color_pair);

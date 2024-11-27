@@ -14,6 +14,17 @@
 
 #include <curses.h>
 #include "worm.h"
+#include "board_model.h"
+
+//A worm structure
+struct worm{
+  int maxindex;
+  int headindex;
+  struct pos wormpos[WORM_LENGTH];
+  int dx;
+  int dy;
+  enum ColorPairs wcolor;
+}
 
 enum WormHeading {
   WORM_UP,
@@ -27,13 +38,11 @@ enum WormHeading {
 };
 
 // Functions concerning the management of the worm data
-extern enum ResCodes initializeWorm(int len_max, int headpos_y, int headpos_x, enum WormHeading dir, enum ColorPairs color);
-extern void showWorm();
-extern void cleanWormTail();
-extern void moveWorm(enum GameStates* agame_state);
-extern bool isInUseByWorm(int new_headpos_y, int new_heapos_x);
-
-//Setters
-extern void setWormHeading(enum WormHeading dir);
+extern enum ResCodes initializeWorm(struct worm* aworm,int len_max, struct pos headpos, enum WormHeading dir, enum ColorPairs color);
+extern void showWorm(struct worm* aworm);
+extern void cleanWormTail(struct worm* aworm);
+extern void moveWorm(struct worm* aworm, enum GameStates* agame_state);
+extern bool isInUseByWorm(struct worm* aworm, struct pos headpos);
+extern void setWormHeading(struct worm* aworm, enum WormHeading dir);
 
 #endif  // #define _WORM_MODEL_H
