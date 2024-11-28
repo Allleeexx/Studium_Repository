@@ -24,7 +24,7 @@ struct worm{
   int dx;
   int dy;
   enum ColorPairs wcolor;
-}
+};
 
 enum WormHeading {
   WORM_UP,
@@ -42,7 +42,7 @@ extern enum ResCodes initializeWorm(struct worm* aworm,int len_max, struct pos h
 extern void showWorm(struct worm* aworm);
 extern void cleanWormTail(struct worm* aworm);
 extern void moveWorm(struct worm* aworm, enum GameStates* agame_state);
-extern bool isInUseByWorm(struct worm* aworm, struct pos headpos);
+extern bool isInUseByWorm(struct worm* aworm, struct pos* headpos);
 extern void setWormHeading(struct worm* aworm, enum WormHeading dir);
 
 #endif  // #define _WORM_MODEL_H

@@ -15,6 +15,7 @@
 enum ResCodes {         //Erstelle einen Neuen "Datentypen" , wobei RES_OK Automatisch mit 0 def wird und dann jedes weitere +1
   RES_OK,
   RES_FAILED,
+  RES_INTERNAL_ERROR,
 };
 
 // Dimensions and bounds
