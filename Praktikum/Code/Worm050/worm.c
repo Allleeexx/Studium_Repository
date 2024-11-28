@@ -19,6 +19,7 @@
 
 //Einfügen der Header Dateien
 #include "prep.h"
+#include "messages.h"
 #include "worm.h"
 #include "board_model.h"
 #include "worm_model.h"
@@ -39,8 +40,9 @@ enum ResCodes doLevel();
 void initializeColors() {
     // Define colors of the game
     start_color();
-    init_pair(COLP_USER_WORM,    COLOR_GREEN /*@002*/,    COLOR_BLACK);
-    init_pair(COLP_FREE_CELL,    COLOR_BLACK,             COLOR_BLACK);
+    init_pair(COLP_USER_WORM,    COLOR_RED /*@002*/,    COLOR_BLACK);
+    init_pair(COLP_FREE_CELL,    COLOR_BLACK,           COLOR_BLACK);
+    init_pair(COLP_BARRIER,      COLOR_RED,             COLOR_BLACK);
 }
 
 void readUserInput(struct worm* aworm, enum GameStates* agame_state ) {
@@ -114,6 +116,8 @@ enum ResCodes doLevel() {
         return res_code;
     }
 
+    //Show border line in order to separate the message area
+    showBorderLine();
     // Show worm at its initial position
     showWorm(&userworm);
 
@@ -145,11 +149,13 @@ enum ResCodes doLevel() {
         showWorm(&userworm);
         // END process userworm
 
+        //Inform user about position and length of userworm in status window
+        showStatus(&userworm);
         // Sleep a bit before we show the updated window
         napms(NAP_TIME);
 
         // Display all the updates
-        refresh();
+        //  refresh(); //Mit Aufgabe 12 Blatt 7 anscheinend auskommentiert bzw. gelöscht
 
         // Start next iteration
     }
@@ -161,51 +167,34 @@ enum ResCodes doLevel() {
     // However, in this version we do not yet check for the reason.
     // There is no user feedback at the moment!
 
+    switch (game_state){
+        case WORM_GAME_QUIT:
+        //User must have typed 'q' for quit
+        showDialog("Sie haben die aktuelle Runde abgebrochen!", "Bitte Taste druecken");
+        break;
+        case WORM_OUT_OF_BOUNDS:
+        showDialog("Sie haben das Spiel verloren, weil Sie das Spielfeld verlassen haben", "Bitte Taste druecken");
+        break;
+        case WORM_CROSSING:
+        showDialog("Sie haben das Spiel verloren, weil Sie einen Wurm gekreuzt haben", "Bitte Taste druecken");
+        break;
+        default:
+        showDialog("Interner Fehler", "Bitte Taste druecken");
+        res_code = RES_INTERNAL_ERROR;
+    }
     // Normal exit point
-    return res_code; // @017
+    return res_code;
 }
-
-// *********************************************
-// Standard curses initialization and cleanup
-// *********************************************
-
-
-
-
-
-
-// *****************************************************
-// Functions concerning the management of the worm data
-// *****************************************************
-
-// START WORM_DETAIL
-// The following functions all depend on the model of the worm
-
-
-
-
-
-
-
-
-
-
-
-// Setters
-
-
-// END WORM_DETAIL
-// ********************************************************************************************
 
 // ********************************************************************************************
 // MAIN
 // ********************************************************************************************
 
 int main(void) {
-    int res_code;         // Result code from functions
+    enum ResCodes res_code;         // Result code from functions
 
     //printf("press key to continue\n");
-    getchar(); // start pogramm, give debugger a chance to attach, waits for eingabe
+    //getchar(); // start pogramm, give debugger a chance to attach, waits for eingabe  //Mit Aufgabe 12 anscheinend gelöscht
 
 
     // Here we start
@@ -217,13 +206,13 @@ int main(void) {
 
     // Check if the window is large enough to display messages in the message area
     // a has space for at least one line for the worm
-    if ( LINES < MIN_NUMBER_OF_ROWS || COLS < MIN_NUMBER_OF_COLS ) {
+    if ( LINES < ROWS_RESERVED + MIN_NUMBER_OF_ROWS || COLS < MIN_NUMBER_OF_COLS ) {
         // Since we not even have the space for displaying messages
         // we print a conventional error message via printf after
         // the call of cleanupCursesApp()
         cleanupCursesApp();
         printf("Das Fenster ist zu klein: wir brauchen mindestens %dx%d\n",
-                MIN_NUMBER_OF_COLS, MIN_NUMBER_OF_ROWS );
+                MIN_NUMBER_OF_COLS, MIN_NUMBER_OF_ROWS + ROWS_RESERVED);
         res_code = RES_FAILED;
     } else {
         res_code = doLevel();

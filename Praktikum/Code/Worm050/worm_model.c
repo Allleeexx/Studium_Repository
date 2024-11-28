@@ -171,3 +171,9 @@ extern void setWormHeading(struct worm* aworm, enum WormHeading dir) {
             break;
     }
 }
+
+struct pos getWormHeadPos(struct worm*aworm){
+    //Structures are passed by value!
+    // -> we return a copy here
+    return aworm->wormpos[aworm->headindex];
+}
