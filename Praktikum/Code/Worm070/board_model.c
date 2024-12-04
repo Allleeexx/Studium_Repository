@@ -33,11 +33,27 @@ void placeItem(int y, int x, chtype symbol, enum ColorPairs color_pair) {
 // Getters
 
 // Get the last usable row on the display
-int getLastRow() {
-    return LINES - 1 -ROWS_RESERVED; //@003;
+int getLastRowOnBoard(struct board* aboard){
+    return aboard -> last_row;
 }
 
 // Get the last usable column on the display
-int getLastCol() {
-    return (COLS-1); // @004
+int getLastColOnBoard(struct board* aboard){
+    return aboard -> last_col;
+}
+
+int getNumberOfFoodItems(struct board* aboard){
+    return aboard -> food_items;
+}
+
+enum BoardCodes getContentAt(struct board* aboard, struct pos position){
+    return aboard -> cells[position.y][position.x];
+}
+
+void setNumberOfFoodItems (struct board* aboard, int n){
+    aboard->food_items = n;
+}
+
+void decrementNumberOfFoodItems(struct board* aboard){
+    aboard->food_items -= 1;
 }
