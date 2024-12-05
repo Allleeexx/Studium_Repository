@@ -50,7 +50,8 @@ struct board
 };
 
 extern enum ResCodes initializeBoard(struct board* aboard);
-extern void placeItem(struct board* aboard, int y, int x, enum BoardCodes board_code, chtype symbol, enum ColorPairs color_pair);
+extern void placeItem(struct board* aboard, int y, int x, enum BoardCodes board_code,
+               chtype symbol, enum ColorPairs color_pair);
 extern enum ResCodes initializeLevel(struct board* aboard);
 
 // Getters
