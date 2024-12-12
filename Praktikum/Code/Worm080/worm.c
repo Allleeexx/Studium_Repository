@@ -222,7 +222,7 @@ enum ResCodes doLevel() {
             break;
 
             default:
-            showDialog("Internet Fehler!", "Bitte Taste druecken");
+            showDialog("Interner Fehler!", "Bitte Taste druecken");
             //set error resault code. This should never happen
             res_code = RES_INTERNAL_ERROR;
     }

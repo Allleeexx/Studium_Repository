@@ -26,20 +26,35 @@ void placeItem(struct board* aboard, int y, int x, enum BoardCodes board_code, c
 }
 
 enum ResCodes initializeBoard(struct board* aboard) {
-    // Check dimension of the board
-    if (COLS < MIN_NUMBER_OF_COLS || LINES < MIN_NUMBER_OF_ROWS + ROWS_RESERVED) {
-       char buf[100];
-       sprintf(buf, "Das Fenster ist zu klein: wir benötigen %dx%d", MIN_NUMBER_OF_COLS, MIN_NUMBER_OF_ROWS + ROWS_RESERVED);
-       showDialog(buf, "Bitte eine Taste druecken");
-       return RES_FAILED;
+  int y;
+  // Maximal index of a row, reserve space for message area
+  aboard->last_row = LINES - ROWS_RESERVED - 1;
+  // Maximal index of a column
+  aboard->last_col = COLS - 1;
+  // Check dimensions of the board
+  if ( aboard->last_col < MIN_NUMBER_OF_COLS - 1 ||
+    aboard->last_row < MIN_NUMBER_OF_ROWS - 1) {
+    char buf[100];
+    sprintf(buf,"Das Fenster ist zu klein: wir brauchen %dx%d",
+    MIN_NUMBER_OF_COLS , MIN_NUMBER_OF_ROWS + ROWS_RESERVED );
+    showDialog(buf,"Bitte eine Taste druecken");
+    return RES_FAILED;
+  }
+  // Allocate memory for 2-dimensional array of cells
+  // Alloc array of rows
+  aboard->cells = (char **)malloc((aboard->last_row+1)*sizeof(char*));/*001 Hier Speicher allozieren*/
+  if (aboard->cells == NULL) {
+    showDialog("Abbruch: Zu wenig Speicher","Bitte eine Taste druecken");
+    exit(RES_FAILED); // No memory -> direct exit
+  }
+  for (y = 0; y < aboard->last_row; y++) {
+    // Allocate array of columns for each y
+    aboard->cells[y] = (char *)malloc((aboard->last_col +1) * sizeof(char));
+    if (aboard->cells[y] == NULL) {
+    //@004 Fehlermeldung wie oben
     }
-
-    //Maximal index of a row
-    aboard-> last_row = MIN_NUMBER_OF_ROWS -1;
-
-    //Maximal index of a column
-    aboard-> last_col = MIN_NUMBER_OF_COLS -1;
-    return RES_OK;
+  }
+  return RES_OK;
 }
 
 enum ResCodes initializeLevel (struct board* aboard) {
