@@ -23,6 +23,6 @@ struct game_options
 };
 
 extern void usage();
-extern enum ResCodes readCommandLineOptions(struct game_options* somegops, int argc, char* argv[]);
+extern enum ResCodes readCommandLineOptions(struct game_options* somegops, int argc, char* argv[]); 
 
 #endif  // #define _OPTIONS_H

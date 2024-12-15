@@ -47,7 +47,7 @@ struct worm
     int dy;
 
     // Color of the worm
-    enum ColorPairs wcolor;
+    enum ColorPairs wcolor; 
 };
 
 enum WormHeading {

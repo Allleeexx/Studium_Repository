@@ -8,9 +8,9 @@
 // (C) 2011
 //
 // The board model
-
-#include <curses.h>
 #include <stdlib.h>
+#include <time.h>
+#include <curses.h>
 #include "worm.h"
 #include "board_model.h"
 #include "messages.h"
@@ -18,7 +18,7 @@
 // Place an item onto the curses display.
 void placeItem(struct board* aboard, int y, int x, enum BoardCodes board_code, chtype symbol, enum ColorPairs color_pair) {
 
-    //  Store item on the display
+    //  Store item on the display 
     move(y, x);
     attron(COLOR_PAIR(color_pair));
     addch(symbol);
@@ -30,7 +30,7 @@ void placeItem(struct board* aboard, int y, int x, enum BoardCodes board_code, c
 
 // Get the last usable row on the display
 int getLastRowOnBoard(struct board* aboard) {
-    return aboard->last_row;     //@003 Da erste Zeile Index = 0, ist letzte Zeile Anzahl-1
+    return aboard->last_row;     //@003 Da erste Zeile Index = 0, ist letzte Zeile Anzahl-1      
 }
 
 // Get the last usable column on the display
@@ -56,53 +56,63 @@ void decrementNumberOfFoodItems(struct board* aboard) {
      aboard->food_items--;
 }
 
-enum ResCodes initializeBoard(struct board* aboard) {
-    int y;
-    // Maximal index of a row, reserve space for message area
-    aboard->last_row = LINES - ROWS_RESERVED - 1;
-    // Maximal index of a column
-    aboard->last_col = COLS - 1;
 
-    // Check dimensions of the board
-    if ( aboard->last_col < MIN_NUMBER_OF_COLS - 1 ||
-    aboard->last_row < MIN_NUMBER_OF_ROWS - 1) {
-        char buf[100];
-        sprintf(buf,"Das Fenster ist zu klein: wir brauchen %dx%d",
-        MIN_NUMBER_OF_COLS , MIN_NUMBER_OF_ROWS + ROWS_RESERVED );
-        showDialog(buf,"Bitte eine Taste druecken");
-        return RES_FAILED;
-    }
+int generateRandomNumber(int N) {   
+    static int seedSet = 0; 
+        if (!seedSet) { 
+        srand(time(NULL)); 
+               seedSet = 1; } 
+    return rand() % (N + 1); 
+}
+
+enum ResCodes initializeBoard(struct board* aboard) {
+     int y;
+     // Maximal index of a row, reserve space for message area
+     aboard->last_row = LINES - ROWS_RESERVED - 1;
+     // Maximal index of a column
+     aboard->last_col = COLS - 1;
+   
+     // Check dimensions of the board
+     if ( aboard->last_col < MIN_NUMBER_OF_COLS - 1 ||
+     aboard->last_row < MIN_NUMBER_OF_ROWS - 1) {
+     char buf[100];
+     sprintf(buf, "Das Fenster ist zu klein: wir brauchen %dx%d",
+     MIN_NUMBER_OF_COLS , MIN_NUMBER_OF_ROWS + ROWS_RESERVED );
+     showDialog(buf, "Bitte eine Taste druecken");
+     return RES_FAILED;
+}
     // Allocate memory for 2-dimensional array of cells
     // Alloc array of rows
-    aboard->cells = malloc(LINES * sizeof(enum BoardCodes*));  // Allocate pointers for rows
+    aboard->cells = malloc(LINES * sizeof(enum BoardCodes));
     if (aboard->cells == NULL) {
         showDialog("Abbruch: Zu wenig Speicher","Bitte eine Taste druecken");
         exit(RES_FAILED); // No memory -> direct exit
-    }
-        for (y = 0; y < LINES; y++) {
-            // Allocate array of columns for each y
-            aboard->cells[y] = malloc(COLS * sizeof(enum BoardCodes));  // Allocate memory for columns
+}
+    for (y = 0; y < LINES; y++) {
+        // Allocate array of columns for each y
+        aboard->cells[y] = malloc(COLS * sizeof(enum BoardCodes));
         if (aboard->cells[y] == NULL) {
-            showDialog("Abbruch: Zu wenig Speicher","Bitte eine Taste druecken");
-            exit(RES_FAILED); // No memory -> direct exit
+           showDialog("Abbruch: Zu wenig Speicher","Bitte eine Taste druecken");
+           exit(RES_FAILED); // No memory -> direct exit
         }
     }
     return RES_OK;
 }
 
+
 void cleanupBoard(struct board* aboard) {
-    // Prüfen, ob cells bereits initialisiert wurde
+    // Prüfe ob cells initialisiert wurde
     if (aboard->cells != NULL) {
-        // Iteriere durch alle Zeilen und gib sie frei
+        // Iteriere durch alle zeilen und gib sie frei
         for (int y = 0; y <= aboard->last_row; y++) {
             if (aboard->cells[y] != NULL) {
                 free(aboard->cells[y]);
-                aboard->cells[y] = NULL; // Vermeidet doppelte Freigabe
+                aboard->cells[y] = NULL; 
             }
         }
-        // Gib das Array der Zeilen frei
+        // Gib das array der zeilen frei        
         free(aboard->cells);
-        aboard->cells = NULL; // Vermeidet doppelte Freigabe
+        aboard->cells = NULL;
     }
 }
 
@@ -124,10 +134,7 @@ for (int x=0; x<=aboard->last_col ; x++) {
     addch(SYMBOL_BARRIER);
     attroff(COLOR_PAIR(COLP_BARRIER));
 }
-// Draw a line to signal the rightmost column of the board.
-for (y=0; y <= aboard->last_row ; y++) {
-    placeItem(aboard, y, aboard->last_col, BC_BARRIER, SYMBOL_BARRIER, COLP_BARRIER);
-}
+
 // Barriers: use a loop
 for (y = 15; y <= 20; y++ ) {
     int x = aboard->last_col * 0.3 ;
@@ -138,18 +145,18 @@ for (y = 10; y <= 20; y++ ) {
     placeItem(aboard, y, x, BC_BARRIER, SYMBOL_BARRIER, COLP_BARRIER);
 }
 // Food
-placeItem(aboard, 3, 3, BC_FOOD_1, SYMBOL_FOOD_1, COLP_FOOD_1);
-placeItem(aboard, 10, 7, BC_FOOD_1, SYMBOL_FOOD_1, COLP_FOOD_1);
+placeItem(aboard, generateRandomNumber(LINES -5), generateRandomNumber(COLS -2), BC_FOOD_1, SYMBOL_FOOD_1, COLP_FOOD_1);
+placeItem(aboard, generateRandomNumber(LINES -5), generateRandomNumber(COLS -2), BC_FOOD_1, SYMBOL_FOOD_1, COLP_FOOD_1);
 
-placeItem(aboard, 6, 2, BC_FOOD_2, SYMBOL_FOOD_2, COLP_FOOD_2);
-placeItem(aboard, 13, 8, BC_FOOD_2, SYMBOL_FOOD_2, COLP_FOOD_2);
-placeItem(aboard, 23, 19, BC_FOOD_2, SYMBOL_FOOD_2, COLP_FOOD_2);
-placeItem(aboard, 11, 21, BC_FOOD_2, SYMBOL_FOOD_2, COLP_FOOD_2);
+placeItem(aboard, generateRandomNumber(LINES -5), generateRandomNumber(COLS -2), BC_FOOD_2, SYMBOL_FOOD_2, COLP_FOOD_2);
+placeItem(aboard, generateRandomNumber(LINES -5), generateRandomNumber(COLS -2), BC_FOOD_2, SYMBOL_FOOD_2, COLP_FOOD_2);
+placeItem(aboard, generateRandomNumber(LINES -5), generateRandomNumber(COLS -2), BC_FOOD_2, SYMBOL_FOOD_2, COLP_FOOD_2);
+placeItem(aboard, generateRandomNumber(LINES -5), generateRandomNumber(COLS -2), BC_FOOD_2, SYMBOL_FOOD_2, COLP_FOOD_2);
 
-placeItem(aboard, 17, 29, BC_FOOD_3, SYMBOL_FOOD_3, COLP_FOOD_3);
-placeItem(aboard, 9, 5, BC_FOOD_3, SYMBOL_FOOD_3, COLP_FOOD_3);
-placeItem(aboard, 9, 9, BC_FOOD_3, SYMBOL_FOOD_3, COLP_FOOD_3);
-placeItem(aboard, 1, 1, BC_FOOD_3, SYMBOL_FOOD_3, COLP_FOOD_3);
+placeItem(aboard, generateRandomNumber(LINES -5), generateRandomNumber(COLS -2), BC_FOOD_3, SYMBOL_FOOD_3, COLP_FOOD_3);
+placeItem(aboard, generateRandomNumber(LINES -5), generateRandomNumber(COLS -2), BC_FOOD_3, SYMBOL_FOOD_3, COLP_FOOD_3);
+placeItem(aboard, generateRandomNumber(LINES -5), generateRandomNumber(COLS -2), BC_FOOD_3, SYMBOL_FOOD_3, COLP_FOOD_3);
+placeItem(aboard, generateRandomNumber(LINES -5), generateRandomNumber(COLS -2), BC_FOOD_3, SYMBOL_FOOD_3, COLP_FOOD_3);
 
 // Initialize number of food items
 // Attention: must match number of items placed on the baord above

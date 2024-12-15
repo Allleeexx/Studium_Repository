@@ -53,7 +53,7 @@ extern enum ResCodes initializeBoard(struct board* aboard);
 extern void placeItem(struct board* aboard, int y, int x, enum BoardCodes board_code,
                chtype symbol, enum ColorPairs color_pair);
 extern enum ResCodes initializeLevel(struct board* aboard);
-extern void cleanupBoard(struct board* aboard);
+
 // Getters
 extern int getNumberOfFoodItems(struct board* aboard);
 extern enum BoardCodes getContentAt(struct board* aboard, struct pos position);
@@ -63,5 +63,5 @@ extern int getLastColOnBoard(struct board* aboard);
 // Setters
 extern void decrementNumberOfFoodItems(struct board* aboard);
 extern void setNumberOfFoodItems(struct board* aboard, int n);
-
+extern void cleanupBoard(struct board* aboard);
 #endif  // #define _BOARD_MODEL_H

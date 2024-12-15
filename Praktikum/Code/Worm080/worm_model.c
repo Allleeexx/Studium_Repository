@@ -49,7 +49,7 @@ extern enum ResCodes initializeWorm(struct worm* aworm, int len_max, int len_cur
     // An unused position in the array is marked with code UNUSED_POS_ELEM
     for(int i = 0; i <= aworm->maxindex; i++) {
         aworm->wormpos[i].y = UNUSED_POS_ELEM;
-        aworm->wormpos[i].x = UNUSED_POS_ELEM;
+        aworm->wormpos[i].x = UNUSED_POS_ELEM;    
     }
     // Initialize position of worms head
     aworm->wormpos[aworm->headindex] = headpos;
@@ -68,35 +68,32 @@ extern enum ResCodes initializeWorm(struct worm* aworm, int len_max, int len_cur
 extern void showWorm(struct board* aboard, struct worm* aworm) {
     // Due to our encoding we just need to show the head element
     // All other elements are already displayed
-    int tailindex = (aworm->headindex + 1) % (aworm->cur_lastindex + 1);
+    int tailindex = (aworm->headindex +1) % (aworm->cur_lastindex + 1);
+    
+
     int i = aworm->headindex;
     do{
-        if(aworm->wormpos[i].x == aworm->wormpos[tailindex].x && aworm->wormpos[i].y == aworm->wormpos[tailindex].y){
+        if(aworm->wormpos[i].x == aworm->wormpos[tailindex].x && aworm->wormpos[i].y == aworm->wormpos[tailindex].y) {
             placeItem(aboard,
-            aworm->wormpos[i].y,
-            aworm->wormpos[i].x,
-            BC_USED_BY_WORM, SYMBOL_WORM_TAIL_ELEMENT, aworm->wcolor);
-        } else if(aworm->wormpos[i].x == aworm->wormpos[aworm->headindex].x && aworm->wormpos[i].y == aworm->wormpos[aworm->headindex].y) {
+                    aworm->wormpos[i].y,
+                    aworm->wormpos[i].x,
+                    BC_USED_BY_WORM, SYMBOL_WORM_TAIL_ELEMENT, aworm->wcolor);
+      } else if(aworm->wormpos[i].x == aworm->wormpos[aworm->headindex].x && aworm->wormpos[i].y == aworm->wormpos[aworm->headindex].y) {
             placeItem(aboard,
-            aworm->wormpos[i].y,
-            aworm->wormpos[i].x,
-            BC_USED_BY_WORM, SYMBOL_WORM_HEAD_ELEMENT, aworm->wcolor);
-        }else {
+                    aworm->wormpos[i].y,
+                    aworm->wormpos[i].x,
+                    BC_USED_BY_WORM, SYMBOL_WORM_HEAD_ELEMENT, aworm->wcolor);
+      } else {
             placeItem(aboard,
-            aworm->wormpos[i].y,
-            aworm->wormpos[i].x,
-            BC_USED_BY_WORM, SYMBOL_WORM_INNER_ELEMENT, aworm->wcolor);
-        }
-        i--;
-        if(i < 0){ i = aworm->cur_lastindex; }
-    } while(i != aworm->headindex && aworm->wormpos[i].x != UNUSED_POS_ELEM && aworm->wormpos[i].y != UNUSED_POS_ELEM);
-
-    placeItem(aboard,
-            aworm->wormpos[aworm->headindex].y,
-            aworm->wormpos[aworm->headindex].x,
-            BC_USED_BY_WORM, SYMBOL_WORM_HEAD_ELEMENT, aworm->wcolor);
-
+                    aworm->wormpos[i].y,
+                    aworm->wormpos[i].x,
+                    BC_USED_BY_WORM, SYMBOL_WORM_INNER_ELEMENT, aworm->wcolor);
+    }
+    i--;
+    if(i < 0){ i = aworm->cur_lastindex; }
+    } while (i != aworm->headindex && aworm->wormpos[i].x != UNUSED_POS_ELEM && aworm->wormpos[i].y != UNUSED_POS_ELEM);
 }
+
 void growWorm(struct worm* aworm, enum Boni growth) {
         // Play it safe and inhibit surpassing the bound
         if (aworm->cur_lastindex + growth <= aworm->maxindex) {
@@ -105,6 +102,7 @@ void growWorm(struct worm* aworm, enum Boni growth) {
                 aworm->cur_lastindex = aworm->maxindex;
         }
 }
+
 
 extern void cleanWormTail(struct board* aboard, struct worm* aworm) {
     int tailindex;
@@ -136,11 +134,11 @@ extern void moveWorm(struct board* aboard, struct worm* aworm, enum GameStates* 
     // We are not allowed to leave the display's window.
     if (headpos.x < 0) {
         *agame_state = WORM_OUT_OF_BOUNDS;
-    } else if (headpos.x > getLastColOnBoard(aboard) ) {
+    } else if (headpos.x > getLastColOnBoard(aboard) ) { 
         *agame_state = WORM_OUT_OF_BOUNDS;                  //@011 Anfang
-    } else if (headpos.y < 0) {
+    } else if (headpos.y < 0) {  
         *agame_state = WORM_OUT_OF_BOUNDS;
-	} else if (headpos.y > getLastRowOnBoard(aboard) ) {
+	} else if (headpos.y > getLastRowOnBoard(aboard) ) {             
         *agame_state = WORM_OUT_OF_BOUNDS;                  //@011 Ende
     } else {
         // We will stay within bounds.
@@ -148,7 +146,7 @@ extern void moveWorm(struct board* aboard, struct worm* aworm, enum GameStates* 
         switch ( getContentAt(aboard, headpos) ) {
             case BC_FOOD_1:
                 *agame_state = WORM_GAME_ONGOING;
-                // Grow worm according to food item digested
+                // Grow worm according to food item digested    
                 growWorm(aworm, BONUS_1);
                 decrementNumberOfFoodItems(aboard);
                 break;
@@ -162,6 +160,7 @@ extern void moveWorm(struct board* aboard, struct worm* aworm, enum GameStates* 
                 growWorm(aworm, BONUS_3);
                 decrementNumberOfFoodItems(aboard);
                 break;
+
             case BC_BARRIER:
                 //That's bad: stop game
                 *agame_state = WORM_CRASH;
@@ -187,11 +186,11 @@ extern void moveWorm(struct board* aboard, struct worm* aworm, enum GameStates* 
             }
             // Store new coordinates of head element in worm structure
             aworm->wormpos[aworm->headindex] = headpos;
-    }
+    }   
 }
 
 
-
+    
 
 
 // A simple collision detection
@@ -199,7 +198,7 @@ extern bool isInUseByWorm(struct worm* aworm, struct pos new_headpos) {
     int i = aworm->headindex;
     bool collision = false;
 
-    do {
+    do {        
         // Compare the position of the current worm element with the new_headpos_*
         if(new_headpos.y == aworm->wormpos[i].y && new_headpos.x == aworm->wormpos[i].x) {
             collision = true;
@@ -231,7 +230,7 @@ extern void setWormHeading(struct worm* aworm, enum WormHeading dir) {
             aworm->dy=0;
             break;
     }
-}
+} 
 
 int getWormLength(struct worm* aworm) {
         return aworm->cur_lastindex + 1;

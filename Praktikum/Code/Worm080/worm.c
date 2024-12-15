@@ -22,7 +22,6 @@
 #include "board_model.h"
 #include "options.h"
 
-
 // ********************************************************************************************
 // Forward declarations of functions
 // ********************************************************************************************
@@ -32,19 +31,19 @@
 // Management of the game
 void initializeColors();
 void readUserInput(struct worm* aworm, enum GameStates* agame_state );
-enum ResCodes doLevel(struct game_options* somegops);
+enum ResCodes doLevel();
 
 
 // Initialize colors of the game
 void initializeColors() {
     // Define colors of the game
     start_color();      //Ermögliche Verwendung von Farbpaaren
-    init_pair(COLP_USER_WORM,     COLOR_RED,        COLOR_BLACK);    // Die 1. Farbe ist grün, die 2. schwarz
+    init_pair(COLP_USER_WORM,     COLOR_BLUE,       COLOR_BLACK);    // Die 1. Farbe ist grün, die 2. schwarz
     init_pair(COLP_FREE_CELL,     COLOR_BLACK,      COLOR_BLACK);    // Beide Farben sind schwarz -> nicht sichtbar
     init_pair(COLP_FOOD_1,        COLOR_YELLOW,     COLOR_BLACK);
     init_pair(COLP_FOOD_2,        COLOR_MAGENTA,    COLOR_BLACK);
     init_pair(COLP_FOOD_3,        COLOR_CYAN,       COLOR_BLACK);
-    init_pair(COLP_BARRIER,       COLOR_BLUE,       COLOR_BLACK);
+    init_pair(COLP_BARRIER,       COLOR_RED,       COLOR_BLACK);
 }
 
 void readUserInput(struct worm* aworm, enum GameStates* agame_state ) {
@@ -87,7 +86,6 @@ enum ResCodes doLevel(struct game_options* somegops) {
      struct worm userworm; // Local variable for storing the user's worm
      struct board theboard; // Our game board
      enum GameStates game_state; // The current game_state
-    napms(somegops->nap_time);
 
     enum ResCodes res_code; // Result code from functions
     bool end_level_loop;    // Indicates whether we should leave the main loop
@@ -148,7 +146,7 @@ enum ResCodes doLevel(struct game_options* somegops) {
         // Inform user about position and length of userworm in status window
         showStatus(&theboard, &userworm);
         // Sleep a bit before we show the updated window
-        napms(NAP_TIME);
+        napms(somegops->nap_time);
 
         // Display all the updates
         refresh();
@@ -198,32 +196,32 @@ enum ResCodes doLevel(struct game_options* somegops) {
     // However, in this version we do not yet check for the reason.
     // There is no user feedback at the moment!
 
-    //FREE ALLOCATED MEMORY
     cleanupBoard(&theboard);
-
     // Normal exit point
     return res_code;        //@017 Rückgabe des zuvor gesetzten res_code
 }
 
-
-
-// MAIN
-// ********************************************************************************************
 enum ResCodes playGame(int argc, char* argv[]) {
     enum ResCodes res_code; // Result code from functions
     struct game_options thegops; // For options passed on the command line
+
     // Read the command line options
     res_code = readCommandLineOptions(&thegops, argc, argv);
     if ( res_code != RES_OK) {
         return res_code; // Error: leave early
     }
+
     if (thegops.start_single_step) {
         nodelay(stdscr, FALSE); // make getch to be a blocking call
     }
+
     // Play the game
     res_code = doLevel(&thegops);
     return res_code;
 }
+
+// MAIN
+// ********************************************************************************************
 
 int main(int argc, char* argv[]) {
     enum ResCodes res_code;         // Result code from functions
@@ -252,3 +250,4 @@ int main(int argc, char* argv[]) {
 
     return res_code;    //@001 Rückgabe des zuvor gesetzten res_code
 }
+
