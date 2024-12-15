@@ -73,21 +73,22 @@ enum ResCodes initializeBoard(struct board* aboard) {
      aboard->last_col = COLS - 1;
 
      // Check dimensions of the board
-     if ( aboard->last_col < MIN_NUMBER_OF_COLS - 1 ||
-     aboard->last_row < MIN_NUMBER_OF_ROWS - 1) {
-     char buf[100];
-     sprintf(buf, "Das Fenster ist zu klein: wir brauchen %dx%d",
-     MIN_NUMBER_OF_COLS , MIN_NUMBER_OF_ROWS + ROWS_RESERVED );
-     showDialog(buf, "Bitte eine Taste druecken");
-     return RES_FAILED;
-}
+     if ( aboard->last_col < MIN_NUMBER_OF_COLS - 1 || aboard->last_row < MIN_NUMBER_OF_ROWS - 1) {
+        char buf[100];
+        sprintf(buf, "Das Fenster ist zu klein: wir brauchen %dx%d",
+        MIN_NUMBER_OF_COLS , MIN_NUMBER_OF_ROWS + ROWS_RESERVED );
+        showDialog(buf, "Bitte eine Taste druecken");
+        return RES_FAILED;
+    }
+
     // Allocate memory for 2-dimensional array of cells
     // Alloc array of rows
     aboard->cells = malloc(LINES * sizeof(enum BoardCodes));
     if (aboard->cells == NULL) {
         showDialog("Abbruch: Zu wenig Speicher","Bitte eine Taste druecken");
         exit(RES_FAILED); // No memory -> direct exit
-}
+    }
+
     for (y = 0; y < LINES; y++) {
         // Allocate array of columns for each y
         aboard->cells[y] = malloc(COLS * sizeof(enum BoardCodes));
@@ -136,11 +137,11 @@ for (int x=0; x<=aboard->last_col ; x++) {
 }
 
 // Barriers: use a loop
-for (y = 15; y <= 20; y++ ) {
+for (y = 2; y <= 25; y++ ) {
     int x = aboard->last_col * 0.3 ;
     placeItem(aboard, y, x, BC_BARRIER, SYMBOL_BARRIER, COLP_BARRIER);
 }
-for (y = 10; y <= 20; y++ ) {
+for (y = 10; y <= 30; y++ ) {
     int x = aboard->last_col - aboard->last_col * 0.3 ;
     placeItem(aboard, y, x, BC_BARRIER, SYMBOL_BARRIER, COLP_BARRIER);
 }

@@ -83,10 +83,9 @@ void readUserInput(struct worm* aworm, enum GameStates* agame_state ) {
 }
 
 enum ResCodes doLevel(struct game_options* somegops) {
-     struct worm userworm; // Local variable for storing the user's worm
-     struct board theboard; // Our game board
-     enum GameStates game_state; // The current game_state
-
+    struct worm userworm; // Local variable for storing the user's worm
+    struct board theboard; // Our game board
+    enum GameStates game_state; // The current game_state
     enum ResCodes res_code; // Result code from functions
     bool end_level_loop;    // Indicates whether we should leave the main loop
 
@@ -97,14 +96,18 @@ enum ResCodes doLevel(struct game_options* somegops) {
 
     // Setup the board
     res_code = initializeBoard(&theboard);
+
     if ( res_code != RES_OK) {
         return res_code;
     }
+
     // Initialize the current level
     res_code = initializeLevel(&theboard);
+
     if ( res_code != RES_OK) {
         return res_code;
     }
+
     // There is always an initialized user worm.
     // Initialize the userworm with its size, position, heading.
     bottomLeft.y =  getLastRowOnBoard(&theboard);
@@ -114,6 +117,7 @@ enum ResCodes doLevel(struct game_options* somegops) {
     if ( res_code != RES_OK) {
         return res_code;
     }
+
     // Show worm at its initial position
     showWorm(&theboard, &userworm);
 
@@ -167,28 +171,26 @@ enum ResCodes doLevel(struct game_options* somegops) {
         if (getNumberOfFoodItems(&theboard) == 0) {
             showDialog("Sie haben diese Runde erfolgreich beendet !!!",
             "Bitte Taste druecken");
-            } else {
-                showDialog("Interner Fehler!","Bitte Taste druecken");
-                // Correct result code
-                res_code = RES_INTERNAL_ERROR;
-            }
+        } else {
+            showDialog("Interner Fehler!","Bitte Taste druecken");
+            // Correct result code
+            res_code = RES_INTERNAL_ERROR;
+        }
             break;
-            case WORM_GAME_QUIT:
+        case WORM_GAME_QUIT:
             // User must have typed 'q' for quit
             showDialog("Sie haben die aktuelle Runde abgebrochen!",
-            "Bitte Taste druecken");
+                       "Bitte Taste druecken");
             break;
-            case WORM_CRASH:
-            showDialog("Sie haben das Spiel verloren,"
-            " weil Sie das Spielfeld verlassen haben.",
-            "Bitte Taste druecken");
+        case WORM_CRASH:
+            showDialog("Sie haben das Spiel verloren, weil Sie das Spielfeld verlassen haben.",
+                       "Bitte Taste druecken");
             break;
-            case WORM_OUT_OF_BOUNDS:
-            showDialog("Sie haben das Spiel verloren,"
-            " weil Sie das Spielfeld verlassen haben.",
-            "Bitte Taste druecken");
+        case WORM_OUT_OF_BOUNDS:
+            showDialog("Sie haben das Spiel verloren, weil Sie das Spielfeld verlassen haben.",
+                       "Bitte Taste druecken");
             break;
-            default:
+        default:
             showDialog("Interner Fehler!","Bitte Taste druecken");
             // Set error result code. This should never happen.
             res_code = RES_INTERNAL_ERROR;
