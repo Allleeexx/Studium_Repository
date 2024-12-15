@@ -54,7 +54,6 @@ extern void placeItem(struct board* aboard, int y, int x, enum BoardCodes board_
                chtype symbol, enum ColorPairs color_pair);
 extern enum ResCodes initializeLevel(struct board* aboard);
 extern void cleanupBoard(struct board* aboard);
-
 // Getters
 extern int getNumberOfFoodItems(struct board* aboard);
 extern enum BoardCodes getContentAt(struct board* aboard, struct pos position);

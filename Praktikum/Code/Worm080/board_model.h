@@ -39,8 +39,12 @@ struct board
     int last_row; // Last usable row on the board
     int last_col; // Last usable column on the board
 
-    //enum BoardCodes cells[MIN_NUMBER_OF_ROWS][MIN_NUMBER_OF_COLS];
     enum BoardCodes** cells;
+    // A 2-dimensional array for storing the contents of the board.
+    //
+    // Since the worm is not permitted to cross over itsself
+    // nor other elements (apart from food) we do not need a reference
+    // counter for occupied cells.
 
     int food_items; // Number of food items left in the current level
 };
@@ -50,7 +54,6 @@ extern void placeItem(struct board* aboard, int y, int x, enum BoardCodes board_
                chtype symbol, enum ColorPairs color_pair);
 extern enum ResCodes initializeLevel(struct board* aboard);
 extern void cleanupBoard(struct board* aboard);
-
 // Getters
 extern int getNumberOfFoodItems(struct board* aboard);
 extern enum BoardCodes getContentAt(struct board* aboard, struct pos position);

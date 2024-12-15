@@ -50,7 +50,7 @@ int showDialog(char* prompt1, char* prompt2) {
 
     if (prompt1 == NULL) {
         return RES_FAILED;
-    } 
+    }
 
     // Delete lines in the message area
     clearLineInMessageArea(pos_line1);
@@ -77,5 +77,5 @@ int showDialog(char* prompt1, char* prompt2) {
     refresh();
 
     // Return code of key pressed
-    return ch; 
+    return ch;
 }

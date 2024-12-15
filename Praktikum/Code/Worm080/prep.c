@@ -30,8 +30,7 @@ void initializeCursesApplication() {
 }
 
 // Reset display to normale state and terminate curses application
-void cleanupCursesApp(void)
-{
+void cleanupCursesApp(void){
     standend();   // Turn off all attributes
     refresh();    // Write changes to terminal
     curs_set(1);  // Set cursor state to normal visibility

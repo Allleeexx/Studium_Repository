@@ -62,6 +62,5 @@ enum ResCodes readCommandLineOptions(struct game_options* somegops,
         return RES_WRONG_OPTION;
     }
 
-    return RES_OK; 
+    return RES_OK;
 }
-
