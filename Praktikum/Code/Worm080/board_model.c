@@ -83,9 +83,9 @@ enum ResCodes initializeLevel (struct board* aboard) {
     }
 
     // Draw a line to signale the rightmost column of the board
-    for(y=0; y<= aboard-> last_row; y++) {
+   /* for(y=0; y<= aboard-> last_row; y++) {
       placeItem(aboard, y , aboard-> last_col, BC_BARRIER, SYMBOL_BARRIER, COLP_BARRIER);
-    }
+    }*/
 
     // Barriers: use a loop, one on left side, other right side
     for(y=2; y < 15; y++) {
