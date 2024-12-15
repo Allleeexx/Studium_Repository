@@ -27,7 +27,7 @@ enum ResCodes {
 
 // Numbers for color pairs used by curses macro COLOR_PAIR
 enum ColorPairs {
-    COLP_USER_WORM = 1,
+    COLP_USER_WORM = 2,
     COLP_FREE_CELL,
     COLP_FOOD_1,
     COLP_FOOD_2,
@@ -41,7 +41,7 @@ enum ColorPairs {
 #define SYMBOL_FOOD_1   '2'
 #define SYMBOL_FOOD_2   '4'
 #define SYMBOL_FOOD_3   '6'
-#define SYMBOL_WORM_HEAD_ELEMENT '^'
+#define SYMBOL_WORM_HEAD_ELEMENT 'X'
 #define SYMBOL_WORM_INNER_ELEMENT 'o'
 #define SYMBOL_WORM_TAIL_ELEMENT '`'
 
