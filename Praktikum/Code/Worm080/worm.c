@@ -213,7 +213,7 @@ enum ResCodes doLevel() {
             res_code = RES_INTERNAL_ERROR;
     }
 
-    res_code = cleanupBoard(&theboard);
+    cleanupBoard(&theboard);
     // Normal exit point
     return res_code; // @017
 }
