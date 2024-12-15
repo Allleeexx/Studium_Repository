@@ -65,20 +65,6 @@ void readUserInput(struct worm *aworm, enum GameStates* agame_state ) {
             case KEY_RIGHT :// User wants right
                 setWormHeading(aworm, WORM_RIGHT); /*@012*/
                 break;
-
-//            case 'w' : // schräg nach links oben
-//              setWormHeading(aworm, WORM_LEFT_UP);
-//                break;
-//            case 'd' : // schräg nach rechts oben
-//                setWormHeading(aworm, WORM_RIGHT_UP);
-//                break;
-//            case 'a' : // schräg links unten
-//                setWormHeading(aworm, WORM_LEFT_DOWN);
-//                break;
-//            case 'x' : // schräg unten rechts
-//                setWormHeading(aworm, WORM_RIGHT_DOWN);
-//                break;
-
             case 'g' :
                 growWorm(aworm, BONUS_3);
                 break;
@@ -137,11 +123,11 @@ enum ResCodes doLevel() {
 
     // Start the loop for this level
     end_level_loop = false; // Flag for controlling the main loop
-                            
+
     while(!end_level_loop) {        //solange es nicht gleich false ist(also true)
-       
+
       // Process optional user input
-        readUserInput(&userworm, &game_state); 
+        readUserInput(&userworm, &game_state);
         if ( game_state == WORM_GAME_QUIT ) {
             end_level_loop = true; // @014
             continue; // Go to beginning of the loop's block and check loop condition
@@ -189,14 +175,14 @@ enum ResCodes doLevel() {
 
             case WORM_GAME_ONGOING:
               if(getNumberOfFoodItems(&theboard) == 0) {
-                 showDialog("Sie haben diese Runde erfolgreich beendet!!" , 
+                 showDialog("Sie haben diese Runde erfolgreich beendet!!" ,
                      "Bitte Taste Druecken");
               } else {
                 showDialog("Interner Fehler!", "Bitte Taste druecken");
                 res_code= RES_INTERNAL_ERROR;
               }
               break;
-              
+
             case WORM_GAME_QUIT:
             // User must have typed 'q' for quit
             showDialog("Sie haben die aktuelle Runde abgebrochen!",
@@ -205,7 +191,7 @@ enum ResCodes doLevel() {
 
             case WORM_CRASH:
             showDialog("Sie haben das Spiel verlore,"
-            "weil Sie in die Barriere gefahren sind", 
+            "weil Sie in die Barriere gefahren sind",
             "Bitte Taste druecken");
             break;
 
@@ -227,6 +213,7 @@ enum ResCodes doLevel() {
             res_code = RES_INTERNAL_ERROR;
     }
 
+    res_code = cleanupBoard(&theboard);
     // Normal exit point
     return res_code; // @017
 }
@@ -235,9 +222,9 @@ enum ResCodes doLevel() {
 // MAIN
 // ********************************************************************************************
 
-int main(void){ 
+int main(void){
     enum ResCodes res_code;         // Result code from functions
-    
+
     //printf("press key to continue\n");
     getchar(); // start pogramm, give debugger a chance to attach, waits for eingabe
 

@@ -62,6 +62,20 @@ enum ResCodes initializeBoard(struct board* aboard) {
     return RES_OK;
 }
 
+void cleanupBoard(struct baord* aboard){
+    if(aboard->cells != NULL){
+      for(int i=0; i<=aboard->lastrow; i++){
+        if(aboard->cells[i] != NULL){
+          free(aboard->cells[i]);
+          aboard->cells[i] = NULL;
+        }
+      }
+
+      free(aboard>cells);
+      aboard->cells = NULL;
+    }
+}
+
 enum ResCodes initializeLevel (struct board* aboard) {
     int y,x; // define local variables for loops
 
@@ -81,11 +95,6 @@ enum ResCodes initializeLevel (struct board* aboard) {
       addch(SYMBOL_BARRIER);
       attroff(COLOR_PAIR(COLP_BARRIER));
     }
-
-    // Draw a line to signale the rightmost column of the board
-   /* for(y=0; y<= aboard-> last_row; y++) {
-      placeItem(aboard, y , aboard-> last_col, BC_BARRIER, SYMBOL_BARRIER, COLP_BARRIER);
-    }*/
 
     // Barriers: use a loop, one on left side, other right side
     for(y=2; y < 15; y++) {
