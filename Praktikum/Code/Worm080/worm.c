@@ -38,7 +38,7 @@ enum ResCodes doLevel();
 void initializeColors() {
     // Define colors of the game
     start_color();      //Ermögliche Verwendung von Farbpaaren
-    init_pair(COLP_USER_WORM,     COLOR_BLUE,       COLOR_BLACK);    // Die 1. Farbe ist grün, die 2. schwarz
+    init_pair(COLP_USER_WORM,     COLOR_YELLOW,       COLOR_BLACK);    // Die 1. Farbe ist grün, die 2. schwarz
     init_pair(COLP_FREE_CELL,     COLOR_BLACK,      COLOR_BLACK);    // Beide Farben sind schwarz -> nicht sichtbar
     init_pair(COLP_FOOD_1,        COLOR_YELLOW,     COLOR_BLACK);
     init_pair(COLP_FOOD_2,        COLOR_MAGENTA,    COLOR_BLACK);
@@ -250,4 +250,3 @@ int main(int argc, char* argv[]) {
 
     return res_code;    //@001 Rückgabe des zuvor gesetzten res_code
 }
-
