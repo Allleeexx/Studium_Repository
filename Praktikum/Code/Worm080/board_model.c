@@ -26,35 +26,40 @@ void placeItem(struct board* aboard, int y, int x, enum BoardCodes board_code, c
 }
 
 enum ResCodes initializeBoard(struct board* aboard) {
-  int y;
-  // Maximal index of a row, reserve space for message area
-  aboard->last_row = LINES - ROWS_RESERVED - 1;
-  // Maximal index of a column
-  aboard->last_col = COLS - 1;
-  // Check dimensions of the board
-  if ( aboard->last_col < MIN_NUMBER_OF_COLS - 1 ||
-    aboard->last_row < MIN_NUMBER_OF_ROWS - 1) {
-    char buf[100];
-    sprintf(buf,"Das Fenster ist zu klein: wir brauchen %dx%d",
-    MIN_NUMBER_OF_COLS , MIN_NUMBER_OF_ROWS + ROWS_RESERVED );
-    showDialog(buf,"Bitte eine Taste druecken");
-    return RES_FAILED;
-  }
-  // Allocate memory for 2-dimensional array of cells
-  // Alloc array of rows
-  aboard->cells = (char **)malloc((aboard->last_row+1)*sizeof(char*));/*001 Hier Speicher allozieren*/
-  if (aboard->cells == NULL) {
-    showDialog("Abbruch: Zu wenig Speicher","Bitte eine Taste druecken");
-    exit(RES_FAILED); // No memory -> direct exit
-  }
-  for (y = 0; y < aboard->last_row; y++) {
-    // Allocate array of columns for each y
-    aboard->cells[y] = (char *)malloc((aboard->last_col +1) * sizeof(char));
-    if (aboard->cells[y] == NULL) {
-    //@004 Fehlermeldung wie oben
+    int y;
+    // Maximal index of a row, reserve space for message area
+    aboard->last_row = LINES - ROWS_RESERVED - 1;
+    // Maximal index of a column
+    aboard->last_col = COLS - 1;
+    // Check dimensions of the board
+
+    if ( aboard->last_col < MIN_NUMBER_OF_COLS - 1 ||
+        aboard->last_row < MIN_NUMBER_OF_ROWS - 1) {
+        char buf[100];
+        sprintf(buf,"Das Fenster ist zu klein: wir brauchen %dx%d",
+        MIN_NUMBER_OF_COLS , MIN_NUMBER_OF_ROWS + ROWS_RESERVED );
+        showDialog(buf,"Bitte eine Taste druecken");
+        return RES_FAILED;
     }
-  }
-  return RES_OK;
+
+    // Allocate memory for 2-dimensional array of cells
+    // Alloc array of rows
+    aboard->cells = malloc(LINES * sizeof(enum BoardCodes*));
+
+    if (aboard->cells == NULL) {
+        showDialog("Abbruch: Zu wenig Speicher","Bitte eine Taste druecken");
+        exit(RES_FAILED); // No memory -> direct exit
+    }
+
+    for (y = 0; y < LINES; y++) {
+        // Allocate array of columns for each y
+        aboard->cells[y] = malloc(COLS * sizeof(enum BoardCodes));
+        if (aboard->cells[y] == NULL) {
+          showDialog("Abbruch: Zu wenig Speicher","Bitte eine Taste druecken");
+          exit(RES_FAILED); // No memory -> direct exit
+        }
+    }
+    return RES_OK;
 }
 
 enum ResCodes initializeLevel (struct board* aboard) {
@@ -75,7 +80,7 @@ enum ResCodes initializeLevel (struct board* aboard) {
       attron(COLOR_PAIR(COLP_BARRIER));
       addch(SYMBOL_BARRIER);
       attroff(COLOR_PAIR(COLP_BARRIER));
-    } 
+    }
 
     // Draw a line to signale the rightmost column of the board
     for(y=0; y<= aboard-> last_row; y++) {
@@ -97,7 +102,7 @@ enum ResCodes initializeLevel (struct board* aboard) {
     placeItem(aboard, 23 , 20, BC_FOOD_1, SYMBOL_FOOD_1, COLP_FOOD_1);
     placeItem(aboard,  6, 62, BC_FOOD_1, SYMBOL_FOOD_1, COLP_FOOD_1);
     placeItem(aboard,  12, 39, BC_FOOD_1, SYMBOL_FOOD_1, COLP_FOOD_1);
-    
+
     placeItem(aboard, 17, 25, BC_FOOD_2, SYMBOL_FOOD_2, COLP_FOOD_2);
     placeItem(aboard, 23 , 3, BC_FOOD_2, SYMBOL_FOOD_2, COLP_FOOD_2);
     placeItem(aboard, 10 ,66 , BC_FOOD_2, SYMBOL_FOOD_2, COLP_FOOD_2);
@@ -146,5 +151,3 @@ void setNumberOfFoodItems(struct board* aboard, int n) {
 void decrementNumberOfFoodItems(struct board* aboard) {
     aboard-> food_items = aboard-> food_items-1;
 }
-
-
