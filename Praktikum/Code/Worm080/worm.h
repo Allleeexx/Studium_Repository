@@ -41,7 +41,7 @@ enum ColorPairs {
 #define SYMBOL_FOOD_1   '2'
 #define SYMBOL_FOOD_2   '4'
 #define SYMBOL_FOOD_3   '6'
-#define SYMBOL_WORM_HEAD_ELEMENT '0'
+#define SYMBOL_WORM_HEAD_ELEMENT '^'
 #define SYMBOL_WORM_INNER_ELEMENT 'o'
 #define SYMBOL_WORM_TAIL_ELEMENT '`'
 

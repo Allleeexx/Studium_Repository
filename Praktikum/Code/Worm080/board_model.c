@@ -18,7 +18,7 @@
 // Place an item onto the curses display.
 void placeItem(struct board* aboard, int y, int x, enum BoardCodes board_code, chtype symbol, enum ColorPairs color_pair) {
 
-    //  Store item on the display 
+    //  Store item on the display
     move(y, x);
     attron(COLOR_PAIR(color_pair));
     addch(symbol);
@@ -30,7 +30,7 @@ void placeItem(struct board* aboard, int y, int x, enum BoardCodes board_code, c
 
 // Get the last usable row on the display
 int getLastRowOnBoard(struct board* aboard) {
-    return aboard->last_row;     //@003 Da erste Zeile Index = 0, ist letzte Zeile Anzahl-1      
+    return aboard->last_row;     //@003 Da erste Zeile Index = 0, ist letzte Zeile Anzahl-1
 }
 
 // Get the last usable column on the display
@@ -57,12 +57,12 @@ void decrementNumberOfFoodItems(struct board* aboard) {
 }
 
 
-int generateRandomNumber(int N) {   
-    static int seedSet = 0; 
-        if (!seedSet) { 
-        srand(time(NULL)); 
-               seedSet = 1; } 
-    return rand() % (N + 1); 
+int generateRandomNumber(int N) {
+    static int seedSet = 0;
+        if (!seedSet) {
+        srand(time(NULL));
+               seedSet = 1; }
+    return rand() % (N + 1);
 }
 
 enum ResCodes initializeBoard(struct board* aboard) {
@@ -71,7 +71,7 @@ enum ResCodes initializeBoard(struct board* aboard) {
      aboard->last_row = LINES - ROWS_RESERVED - 1;
      // Maximal index of a column
      aboard->last_col = COLS - 1;
-   
+
      // Check dimensions of the board
      if ( aboard->last_col < MIN_NUMBER_OF_COLS - 1 ||
      aboard->last_row < MIN_NUMBER_OF_ROWS - 1) {
@@ -107,10 +107,10 @@ void cleanupBoard(struct board* aboard) {
         for (int y = 0; y <= aboard->last_row; y++) {
             if (aboard->cells[y] != NULL) {
                 free(aboard->cells[y]);
-                aboard->cells[y] = NULL; 
+                aboard->cells[y] = NULL;
             }
         }
-        // Gib das array der zeilen frei        
+        // Gib das array der zeilen frei
         free(aboard->cells);
         aboard->cells = NULL;
     }
@@ -147,7 +147,12 @@ for (y = 10; y <= 20; y++ ) {
 // Food
 placeItem(aboard, generateRandomNumber(LINES -5), generateRandomNumber(COLS -2), BC_FOOD_1, SYMBOL_FOOD_1, COLP_FOOD_1);
 placeItem(aboard, generateRandomNumber(LINES -5), generateRandomNumber(COLS -2), BC_FOOD_1, SYMBOL_FOOD_1, COLP_FOOD_1);
+placeItem(aboard, generateRandomNumber(LINES -5), generateRandomNumber(COLS -2), BC_FOOD_1, SYMBOL_FOOD_1, COLP_FOOD_1);
+placeItem(aboard, generateRandomNumber(LINES -5), generateRandomNumber(COLS -2), BC_FOOD_1, SYMBOL_FOOD_1, COLP_FOOD_1);
 
+placeItem(aboard, generateRandomNumber(LINES -5), generateRandomNumber(COLS -2), BC_FOOD_2, SYMBOL_FOOD_2, COLP_FOOD_2);
+placeItem(aboard, generateRandomNumber(LINES -5), generateRandomNumber(COLS -2), BC_FOOD_2, SYMBOL_FOOD_2, COLP_FOOD_2);
+placeItem(aboard, generateRandomNumber(LINES -5), generateRandomNumber(COLS -2), BC_FOOD_2, SYMBOL_FOOD_2, COLP_FOOD_2);
 placeItem(aboard, generateRandomNumber(LINES -5), generateRandomNumber(COLS -2), BC_FOOD_2, SYMBOL_FOOD_2, COLP_FOOD_2);
 placeItem(aboard, generateRandomNumber(LINES -5), generateRandomNumber(COLS -2), BC_FOOD_2, SYMBOL_FOOD_2, COLP_FOOD_2);
 placeItem(aboard, generateRandomNumber(LINES -5), generateRandomNumber(COLS -2), BC_FOOD_2, SYMBOL_FOOD_2, COLP_FOOD_2);
@@ -160,6 +165,6 @@ placeItem(aboard, generateRandomNumber(LINES -5), generateRandomNumber(COLS -2),
 
 // Initialize number of food items
 // Attention: must match number of items placed on the baord above
-aboard->food_items = 10;
+aboard->food_items = 15;
 return RES_OK;
 }
