@@ -31,7 +31,7 @@
 // Management of the game
 void initializeColors();
 void readUserInput(struct worm* aworm, enum GameStates* agame_state );
-enum ResCodes doLevel();
+enum ResCodes doLevel(struct game_options* somegops);
 
 
 // Initialize colors of the game
@@ -96,14 +96,12 @@ enum ResCodes doLevel(struct game_options* somegops) {
 
     // Setup the board
     res_code = initializeBoard(&theboard);
-
     if ( res_code != RES_OK) {
         return res_code;
     }
 
     // Initialize the current level
     res_code = initializeLevelFromFile(&theboard, "pirates-doubledoom.level.4");
-
     if ( res_code != RES_OK) {
         return res_code;
     }
