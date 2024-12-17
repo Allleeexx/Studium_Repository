@@ -102,7 +102,7 @@ enum ResCodes doLevel(struct game_options* somegops) {
     }
 
     // Initialize the current level
-    res_code = initializeLevel(&theboard);
+    res_code = initializeLevelFromFile(&theboard, "pirates-doubledoom.level.4");
 
     if ( res_code != RES_OK) {
         return res_code;
