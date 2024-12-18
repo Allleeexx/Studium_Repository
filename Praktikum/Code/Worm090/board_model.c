@@ -205,12 +205,15 @@ enum ResCodes initializeLevelFromFile(struct board* aboard, const char* filename
                     break;
                 case SYMBOL_FOOD_1:
                     placeItem(aboard,rownr,x,BC_FOOD_1,SYMBOL_FOOD_1,COLP_FOOD_1);
+                    aboard->food_items ++;
                     break;
                 case SYMBOL_FOOD_2:
                     placeItem(aboard,rownr,x,BC_FOOD_2,SYMBOL_FOOD_2,COLP_FOOD_2);
+                    aboard->food_items ++;
                     break;
                 case SYMBOL_FOOD_3:
                     placeItem(aboard,rownr,x,BC_FOOD_3,SYMBOL_FOOD_3,COLP_FOOD_3);
+                    aboard->food_items ++;
                     break;
 
                 // We ignore all other symbols!
