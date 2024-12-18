@@ -31,7 +31,7 @@
 // Management of the game
 void initializeColors();
 void readUserInput(struct worm* aworm, enum GameStates* agame_state );
-enum ResCodes doLevel(struct game_options* somegops, char* level_filename);
+enum ResCodes doLevel(struct game_options* somegops, enum GameStates* agame_state, char* level_filename);
 
 
 // Initialize colors of the game
@@ -82,17 +82,18 @@ void readUserInput(struct worm* aworm, enum GameStates* agame_state ) {
     return;
 }
 
-enum ResCodes doLevel(struct game_options* somegops, char* level_filename) {
+enum ResCodes doLevel(struct game_options* somegops, enum GameStates* agame_state, char* level_filename) {
     struct worm userworm; // Local variable for storing the user's worm
     struct board theboard; // Our game board
-    enum GameStates game_state; // The current game_state
+    /*enum GameStates game_state; // The current game_state            ---- Hier in Aufgabe 7 nach playgame verschoben*/
     enum ResCodes res_code; // Result code from functions
     bool end_level_loop;    // Indicates whether we should leave the main loop
 
     struct pos bottomLeft;   // Start positions of the worm
 
+    /*
     // At the beginnung of the level, we still have a chance to win
-    game_state = WORM_GAME_ONGOING;
+    game_state = WORM_GAME_ONGOING;                                     ---- Hier den Teil in Aufgabe 7 in playgame verschoben*/
 
     // Setup the board
     res_code = initializeBoard(&theboard);
@@ -126,8 +127,8 @@ enum ResCodes doLevel(struct game_options* somegops, char* level_filename) {
     end_level_loop = false; // Flag for controlling the main loop
     while(!end_level_loop) {    //entspricht while(end_level_loop == false)
         // Process optional user input
-        readUserInput(&userworm, &game_state);     //Wenn getch non-blocking und kein User-Input vorhanden ist, wird geskippt -> &game_state wird übergeben, um z.B. 'q' zu WORM_GAME_QUIT zu verarbeiten
-        if ( game_state == WORM_GAME_QUIT ) {
+        readUserInput(&userworm, agame_state.game_state);     //Wenn getch non-blocking und kein User-Input vorhanden ist, wird geskippt -> &game_state wird übergeben, um z.B. 'q' zu WORM_GAME_QUIT zu verarbeiten
+        if (agame_state.game_state == WORM_GAME_QUIT ) {
             end_level_loop = true;      //@014 Bedingung für Schleifen-Abbruch
             continue; // Go to beginning of the loop's block and check loop condition
         }
@@ -136,9 +137,9 @@ enum ResCodes doLevel(struct game_options* somegops, char* level_filename) {
         // Clean the tail of the worm
         cleanWormTail(&theboard, &userworm);
         // Now move the worm for one step
-        moveWorm(&theboard, &userworm, &game_state);       //@015 &game_state ist als Argument in moveWorm nötig, um WORM_OUT_OF_BOUNDS zurückzugeben, falls der Wurm den Bildschirm verlässt
+        moveWorm(&theboard, &userworm, agame_state.game_state);       //@015 &game_state ist als Argument in moveWorm nötig, um WORM_OUT_OF_BOUNDS zurückzugeben, falls der Wurm den Bildschirm verlässt
         // Bail out of the loop if something bad happened
-        if ( game_state != WORM_GAME_ONGOING ) {
+        if ( agame_state.game_state != WORM_GAME_ONGOING ) {
             end_level_loop = true;      //@016 Bedingung für Schleifen-Abbruch
             continue; // Go to beginning of the loop's block and check loop condition
         }
@@ -164,7 +165,7 @@ enum ResCodes doLevel(struct game_options* somegops, char* level_filename) {
 
     // For some reason we left the control loop of the current level.
     // Check why according to game_state
-    switch (game_state) {
+    switch (agame_state.game_state) {
         case WORM_GAME_ONGOING:
         if (getNumberOfFoodItems(&theboard) == 0) {
             showDialog("Sie haben diese Runde erfolgreich beendet !!!",
@@ -208,7 +209,9 @@ enum ResCodes doLevel(struct game_options* somegops, char* level_filename) {
 enum ResCodes playGame(int argc, char* argv[]) {
     enum ResCodes res_code; // Result code from functions
     struct game_options thegops; // For options passed on the command line
+    enum GameStates game_state;
 
+    game_state = WORM_GAME_ONGOING;
     // Read the command line options
     res_code = readCommandLineOptions(&thegops, argc, argv);
     if ( res_code != RES_OK) {
@@ -220,10 +223,10 @@ enum ResCodes playGame(int argc, char* argv[]) {
     }
     //Play the game
     if(thegops.start_level_filename != NULL){
-        res_code = doLevel(&thegops, thegops.start_level_filename);
+        res_code = doLevel(&thegops, game_state, thegops.start_level_filename);     //Hier noch game_state hinzugefügt in Aufgabe 7 in else auch
         free(thegops.start_level_filename);
     }else{
-        res_code = doLevel(&thegops, "basic.level.1");
+        res_code = doLevel(&thegops, game_state ,"basic.level.1");
     }
     return res_code;
 }
