@@ -211,7 +211,15 @@ enum ResCodes playGame(int argc, char* argv[]) {
     struct game_options thegops; // For options passed on the command line
     enum GameStates game_state;
 
-    game_state = WORM_GAME_ONGOING;
+    char* level_list[] = {
+        "basic.level.1",
+        "squaredance.level.2",
+        "pirates-doom.level.3",
+        NULL
+    };
+    int cur_level;
+
+
     // Read the command line options
     res_code = readCommandLineOptions(&thegops, argc, argv);
     if ( res_code != RES_OK) {
@@ -222,11 +230,26 @@ enum ResCodes playGame(int argc, char* argv[]) {
         nodelay(stdscr, FALSE); // make getch to be a blocking call
     }
     //Play the game
+    //At the beginning of the level, we still have a chance to win
+    game_state = WORM_GAME_ONGOING;
     if(thegops.start_level_filename != NULL){
         res_code = doLevel(&thegops, &game_state, thegops.start_level_filename);     //Hier noch game_state hinzugefügt in Aufgabe 7 in else auch
         free(thegops.start_level_filename);
     }else{
-        res_code = doLevel(&thegops, &game_state ,"basic.level.1");
+        cur_level = 0;
+        while(level_list[cur_level] != NULL && res_code == RES_OK && game_state == WORM_GAME_ONGOING){
+            res_code = doLevel(&thegops, &game_state ,"basic.level.1");
+            cur_level ++;
+        }
+        if(res_code != RES_OK){
+            showDialog("Irgendwas ist mal wieder falsch. Res_code != RES_OK. Programmierer rufen und feuern ;)   --- Bitte Taste druecken");
+        }else if(level_list[cur_level] == NULL && game_state == WORM_GAME_ONGOING){
+            showDialog("Glückwunsch du Klugscheisser. Du hast alle Level bestanden.   --- Bitte Taste druecken");
+        }else if(game_state == WORM_GAME_QUIT){
+            showDialog("HAHAHAH du Lappen gibst auf   --- Druecke um zu weinen");
+        }else{
+            showDialog("Fahrfehler ---Bitte Taste druecken");
+        }
     }
     return res_code;
 }
