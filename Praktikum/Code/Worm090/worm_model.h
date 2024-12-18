@@ -20,7 +20,6 @@
 #define UNUSED_POS_ELEM -1  // Unused element in the worm arrays of positions
 
 // Dimensions and bounds
-#define WORM_LENGTH (MIN_NUMBER_OF_ROWS * MIN_NUMBER_OF_COLS) // Max length of a worm
 #define WORM_INITIAL_LENGTH 4  // Initial length of the user's worm
 
 // Boni for eating food
@@ -35,19 +34,13 @@ struct worm
 {
     int cur_lastindex; // The current last index in the array of worm's element positions
     int maxindex;      // Last usable index into the array pointed to by wormpos
-
     int headindex;     // An index into the array for the head position of the worm
-    // 0 <= headindex <= maxindex
-
-    struct pos wormpos[WORM_LENGTH]; // Array of x,y positions of all elements of the worm
-
-    // The current heading of the worm
-    // These are offsets from the set {-1,0,+1}
+    struct pos* wormpos; // Array of x,y positions of all elements of the worm
     int dx;
     int dy;
 
     // Color of the worm
-    enum ColorPairs wcolor; 
+    enum ColorPairs wcolor;
 };
 
 enum WormHeading {
@@ -57,12 +50,12 @@ enum WormHeading {
     WORM_RIGHT
 };
 
-extern enum ResCodes initializeWorm(struct worm* aworm, int len_max, int len_cur,
-                                    struct pos headpos, enum WormHeading dir, enum ColorPairs color);
-
+extern enum ResCodes initializeWorm(struct worm* aworm, int len_max, int len_cur, struct pos headpos, enum WormHeading dir, enum ColorPairs color);
 extern void growWorm(struct worm* aworm, enum Boni growth);
 extern void showWorm(struct board* aboard, struct worm* aworm);
 extern void cleanWormTail(struct board* aboard, struct worm* aworm);
+extern void cleanupWorm(struct worm* aworm);
+extern void removeWorm(struct board* aboard, struct worm* aworm);
 extern void moveWorm(struct board* aboard, struct worm* aworm, enum GameStates* agame_state);
 
 // Getters

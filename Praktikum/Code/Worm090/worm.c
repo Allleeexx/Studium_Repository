@@ -112,7 +112,7 @@ enum ResCodes doLevel(struct game_options* somegops, enum GameStates* agame_stat
     bottomLeft.y =  getLastRowOnBoard(&theboard);
     bottomLeft.x =  0;
 
-    res_code = initializeWorm(&userworm, WORM_LENGTH, WORM_INITIAL_LENGTH, bottomLeft, WORM_RIGHT, COLP_USER_WORM);
+    res_code = initializeWorm(&userworm, (theboard.last_row+1)*(theboard.last_col+1), WORM_INITIAL_LENGTH, bottomLeft, WORM_RIGHT, COLP_USER_WORM);
     if ( res_code != RES_OK) {
         return res_code;
     }
@@ -196,7 +196,8 @@ enum ResCodes doLevel(struct game_options* somegops, enum GameStates* agame_stat
 }
     // However, in this version we do not yet check for the reason.
     // There is no user feedback at the moment!
-
+    removeWorm(&theboard, &userworm);
+    cleanupWorm(&userworm);
     cleanupBoard(&theboard);
     // Normal exit point
     return res_code;        //@017 Rückgabe des zuvor gesetzten res_code

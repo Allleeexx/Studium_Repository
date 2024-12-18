@@ -10,14 +10,11 @@
 // The worm model
 
 #include <curses.h>
+#include <stdlib.h>
 #include "worm.h"
 #include "board_model.h"
 #include "worm_model.h"
-
-
-
-
-
+#include "messages.h"
 
 // *****************************************************
 // Functions concerning the management of the worm data
@@ -45,11 +42,18 @@ extern enum ResCodes initializeWorm(struct worm* aworm, int len_max, int len_cur
     // theworm_headindex
     aworm->headindex = 0;
 
+    //Initialize the array for elemnt positions
+    //Allocate an array of the worm length
+    if( (aworm->wormpos == malloc(sizeof(struct pos) * len_max )) == NULL){
+        showDialog("Abbruch: Zu wenig SPeicher", "Bitte eine Taste druecken");
+        exit(RES_FAILED); // No memory -> direct exit
+    }
+
     // Mark all elements as unused in the arrays of positions theworm_wormpos_y[] and theworm_wormpos_x[]
     // An unused position in the array is marked with code UNUSED_POS_ELEM
     for(int i = 0; i <= aworm->maxindex; i++) {
         aworm->wormpos[i].y = UNUSED_POS_ELEM;
-        aworm->wormpos[i].x = UNUSED_POS_ELEM;    
+        aworm->wormpos[i].x = UNUSED_POS_ELEM;
     }
     // Initialize position of worms head
     aworm->wormpos[aworm->headindex] = headpos;
@@ -69,7 +73,7 @@ extern void showWorm(struct board* aboard, struct worm* aworm) {
     // Due to our encoding we just need to show the head element
     // All other elements are already displayed
     int tailindex = (aworm->headindex +1) % (aworm->cur_lastindex + 1);
-    
+
 
     int i = aworm->headindex;
     do{
@@ -119,6 +123,20 @@ extern void cleanWormTail(struct board* aboard, struct worm* aworm) {
     }
 }
 
+extern void cleanupWorm(struct worm* aworm){
+    //free array of wormpos
+    free(aworm->wormpos);
+}
+
+extern void removeWorm(struct board* aboard, struct worm* aworm){
+    int i = aworm->headindex;
+    do{
+        placeItem();
+        //Advance index; go around after aworm->cur_lastindex
+
+    }while(i != aworm->headindex +1);
+}
+
 extern void moveWorm(struct board* aboard, struct worm* aworm, enum GameStates* agame_state) {
     struct pos headpos;
     // Get the current position of the worm's head element and compute the new head position according
@@ -134,11 +152,11 @@ extern void moveWorm(struct board* aboard, struct worm* aworm, enum GameStates* 
     // We are not allowed to leave the display's window.
     if (headpos.x < 0) {
         *agame_state = WORM_OUT_OF_BOUNDS;
-    } else if (headpos.x > getLastColOnBoard(aboard) ) { 
+    } else if (headpos.x > getLastColOnBoard(aboard) ) {
         *agame_state = WORM_OUT_OF_BOUNDS;                  //@011 Anfang
-    } else if (headpos.y < 0) {  
+    } else if (headpos.y < 0) {
         *agame_state = WORM_OUT_OF_BOUNDS;
-	} else if (headpos.y > getLastRowOnBoard(aboard) ) {             
+	} else if (headpos.y > getLastRowOnBoard(aboard) ) {
         *agame_state = WORM_OUT_OF_BOUNDS;                  //@011 Ende
     } else {
         // We will stay within bounds.
@@ -146,7 +164,7 @@ extern void moveWorm(struct board* aboard, struct worm* aworm, enum GameStates* 
         switch ( getContentAt(aboard, headpos) ) {
             case BC_FOOD_1:
                 *agame_state = WORM_GAME_ONGOING;
-                // Grow worm according to food item digested    
+                // Grow worm according to food item digested
                 growWorm(aworm, BONUS_1);
                 decrementNumberOfFoodItems(aboard);
                 break;
@@ -186,11 +204,11 @@ extern void moveWorm(struct board* aboard, struct worm* aworm, enum GameStates* 
             }
             // Store new coordinates of head element in worm structure
             aworm->wormpos[aworm->headindex] = headpos;
-    }   
+    }
 }
 
 
-    
+
 
 
 // A simple collision detection
@@ -198,7 +216,7 @@ extern bool isInUseByWorm(struct worm* aworm, struct pos new_headpos) {
     int i = aworm->headindex;
     bool collision = false;
 
-    do {        
+    do {
         // Compare the position of the current worm element with the new_headpos_*
         if(new_headpos.y == aworm->wormpos[i].y && new_headpos.x == aworm->wormpos[i].x) {
             collision = true;
@@ -230,7 +248,7 @@ extern void setWormHeading(struct worm* aworm, enum WormHeading dir) {
             aworm->dy=0;
             break;
     }
-} 
+}
 
 int getWormLength(struct worm* aworm) {
         return aworm->cur_lastindex + 1;
