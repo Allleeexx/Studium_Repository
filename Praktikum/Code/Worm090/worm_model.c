@@ -224,7 +224,7 @@ extern bool isInUseByWorm(struct worm* aworm, struct pos new_headpos) {
         if(new_headpos.y == aworm->wormpos[i].y && new_headpos.x == aworm->wormpos[i].x) {
             collision = true;
         }
-        i = (i+1) % WORM_LENGTH;
+        i = (i+1) % aworm->cur_lastindex;
     } while (i != aworm->headindex && aworm->wormpos[i].x != UNUSED_POS_ELEM);    // Solange i ungleich theworm_headindex UND Koordinate an Stelle i nicht unused
 
     // Return what we found out
