@@ -82,7 +82,7 @@ void readUserInput(struct worm* aworm, enum GameStates* agame_state ) {
     return;
 }
 
-enum ResCodes doLevel(struct game_options* somegops) {
+enum ResCodes doLevel(struct game_options* somegops, char* level_filename) {
     struct worm userworm; // Local variable for storing the user's worm
     struct board theboard; // Our game board
     enum GameStates game_state; // The current game_state
@@ -101,7 +101,7 @@ enum ResCodes doLevel(struct game_options* somegops) {
     }
 
     // Initialize the current level
-    res_code = initializeLevelFromFile(&theboard, "pirates-doubledoom.level.4");
+    res_code = initializeLevelFromFile(&theboard, level_filename);
     if ( res_code != RES_OK) {
         return res_code;
     }
@@ -201,6 +201,10 @@ enum ResCodes doLevel(struct game_options* somegops) {
     return res_code;        //@017 Rückgabe des zuvor gesetzten res_code
 }
 
+
+// playGame
+// ********************************************************************************************
+
 enum ResCodes playGame(int argc, char* argv[]) {
     enum ResCodes res_code; // Result code from functions
     struct game_options thegops; // For options passed on the command line
@@ -214,9 +218,13 @@ enum ResCodes playGame(int argc, char* argv[]) {
     if (thegops.start_single_step) {
         nodelay(stdscr, FALSE); // make getch to be a blocking call
     }
-
-    // Play the game
-    res_code = doLevel(&thegops);
+    //Play the game
+    if(thegops.start_level_filename != NULL){
+        res_code = doLevel(&thegops, thegops.start_level_filename);
+        free(thegops.start_level_filename);
+    }else{
+        res_code = doLevel(&thegops, "basic.level.1");
+    }
     return res_code;
 }
 

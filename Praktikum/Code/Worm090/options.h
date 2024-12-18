@@ -20,9 +20,10 @@ struct game_options
 {
     int nap_time;               // Time in milliseconds to sleep at the end of level loop
     bool start_single_step;     // Start game in single step mode
+    char* start_level_filename;
 };
 
 extern void usage();
-extern enum ResCodes readCommandLineOptions(struct game_options* somegops, int argc, char* argv[]); 
+extern enum ResCodes readCommandLineOptions(struct game_options* somegops, int argc, char* argv[]);
 
 #endif  // #define _OPTIONS_H
