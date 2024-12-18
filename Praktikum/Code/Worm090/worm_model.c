@@ -131,10 +131,13 @@ extern void cleanupWorm(struct worm* aworm){
 extern void removeWorm(struct board* aboard, struct worm* aworm){
     int i = aworm->headindex;
     do{
-        placeItem();
+        placeItem(aboard, aworm->wormpos[i].y, aworm->wormpos[i].x, BC_FREE_CELL, SYMBOL_FREE_CELL, COLP_FREE_CELL);
         //Advance index; go around after aworm->cur_lastindex
-
-    }while(i != aworm->headindex +1);
+        i--;
+        if(i<0){
+            i = aworm->cur_lastindex;
+        }
+    }while(i != aworm->headindex && aworm->wormpos[i].x != UNUSED_POS_ELEM);
 }
 
 extern void moveWorm(struct board* aboard, struct worm* aworm, enum GameStates* agame_state) {
