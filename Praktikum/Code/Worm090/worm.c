@@ -31,7 +31,7 @@
 // Management of the game
 void initializeColors();
 void readUserInput(struct worm* aworm, enum GameStates* agame_state );
-enum ResCodes doLevel(struct game_options* somegops);
+enum ResCodes doLevel(struct game_options* somegops, char* level_filename);
 
 
 // Initialize colors of the game
