@@ -223,10 +223,10 @@ enum ResCodes playGame(int argc, char* argv[]) {
     }
     //Play the game
     if(thegops.start_level_filename != NULL){
-        res_code = doLevel(&thegops, game_state, thegops.start_level_filename);     //Hier noch game_state hinzugefügt in Aufgabe 7 in else auch
+        res_code = doLevel(&thegops, &game_state, thegops.start_level_filename);     //Hier noch game_state hinzugefügt in Aufgabe 7 in else auch
         free(thegops.start_level_filename);
     }else{
-        res_code = doLevel(&thegops, game_state ,"basic.level.1");
+        res_code = doLevel(&thegops, &game_state ,"basic.level.1");
     }
     return res_code;
 }
