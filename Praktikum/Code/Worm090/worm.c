@@ -127,7 +127,7 @@ enum ResCodes doLevel(struct game_options* somegops, enum GameStates* agame_stat
     end_level_loop = false; // Flag for controlling the main loop
     while(!end_level_loop) {    //entspricht while(end_level_loop == false)
         // Process optional user input
-        readUserInput(&userworm, &agame_state);     //Wenn getch non-blocking und kein User-Input vorhanden ist, wird geskippt -> &game_state wird übergeben, um z.B. 'q' zu WORM_GAME_QUIT zu verarbeiten
+        readUserInput(&userworm, agame_state);     //Wenn getch non-blocking und kein User-Input vorhanden ist, wird geskippt -> &game_state wird übergeben, um z.B. 'q' zu WORM_GAME_QUIT zu verarbeiten
         if (*agame_state == WORM_GAME_QUIT ) {
             end_level_loop = true;      //@014 Bedingung für Schleifen-Abbruch
             continue; // Go to beginning of the loop's block and check loop condition
@@ -137,7 +137,7 @@ enum ResCodes doLevel(struct game_options* somegops, enum GameStates* agame_stat
         // Clean the tail of the worm
         cleanWormTail(&theboard, &userworm);
         // Now move the worm for one step
-        moveWorm(&theboard, &userworm, &agame_state);       //@015 &game_state ist als Argument in moveWorm nötig, um WORM_OUT_OF_BOUNDS zurückzugeben, falls der Wurm den Bildschirm verlässt
+        moveWorm(&theboard, &userworm, agame_state);       //@015 &game_state ist als Argument in moveWorm nötig, um WORM_OUT_OF_BOUNDS zurückzugeben, falls der Wurm den Bildschirm verlässt
         // Bail out of the loop if something bad happened
         if ( *agame_state != WORM_GAME_ONGOING ) {
             end_level_loop = true;      //@016 Bedingung für Schleifen-Abbruch
