@@ -242,13 +242,13 @@ enum ResCodes playGame(int argc, char* argv[]) {
             cur_level ++;
         }
         if(res_code != RES_OK){
-            showDialog("Irgendwas ist mal wieder falsch. Res_code != RES_OK. Programmierer rufen und feuern ;)   --- Bitte Taste druecken");
+            showDialog("Irgendwas ist mal wieder falsch. Res_code != RES_OK. Programmierer rufen und feuern ;)",   "--- Bitte Taste druecken");
         }else if(level_list[cur_level] == NULL && game_state == WORM_GAME_ONGOING){
-            showDialog("Glückwunsch du Klugscheisser. Du hast alle Level bestanden.   --- Bitte Taste druecken");
+            showDialog("Glückwunsch du Klugscheisser. Du hast alle Level bestanden.","--- Bitte Taste druecken");
         }else if(game_state == WORM_GAME_QUIT){
-            showDialog("HAHAHAH du Lappen gibst auf   --- Druecke um zu weinen");
+            showDialog("HAHAHAH du Lappen gibst auf","--- Druecke um zu weinen");
         }else{
-            showDialog("Fahrfehler ---Bitte Taste druecken");
+            showDialog("Fahrfehler",  "---Bitte Taste druecken");
         }
     }
     return res_code;
