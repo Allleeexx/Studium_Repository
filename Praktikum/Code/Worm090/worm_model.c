@@ -44,8 +44,8 @@ extern enum ResCodes initializeWorm(struct worm* aworm, int len_max, int len_cur
 
     //Initialize the array for elemnt positions
     //Allocate an array of the worm length
-    if((aworm->wormpos == malloc(sizeof(struct pos) * len_max )) == NULL){
-        showDialog("Abbruch: Zu wenig Speicher", "Bitte eine Taste druecken");
+    if((aworm->wormpos = malloc(sizeof(struct pos) * len_max )) == NULL){
+        showDialog("Abbruch: Zu wenig Speicherrrrrrrrrrr", "Bitte eine Taste druecken");
         exit(RES_FAILED); // No memory -> direct exit
     }
 
