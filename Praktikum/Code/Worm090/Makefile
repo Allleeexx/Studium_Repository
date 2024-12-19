@@ -45,7 +45,7 @@ else ifeq ($(MACHINE), arm64)
   CFLAGS = -g -Wall
   LDLIBS = -lncurses
 else ifeq ($(MACHINE), x86_64)
-  CFLAGS = -g -Wall
+  CFLAGS = -g -Wall -fsanitize=address -fsanitize=leak
   LDLIBS = -lncurses
 endif
 

@@ -80,7 +80,7 @@ enum ResCodes initializeBoard(struct board* aboard) {
 
     // Allocate memory for 2-dimensional array of cells
     // Alloc array of rows
-    aboard->cells = malloc(LINES * sizeof(enum BoardCodes));
+    aboard->cells = malloc(LINES * sizeof(enum BoardCodes*)); 
     if (aboard->cells == NULL) {
         showDialog("Abbruch: Zu wenig Speicher","Bitte eine Taste druecken");
         exit(RES_FAILED); // No memory -> direct exit

@@ -44,8 +44,8 @@ extern enum ResCodes initializeWorm(struct worm* aworm, int len_max, int len_cur
 
     //Initialize the array for elemnt positions
     //Allocate an array of the worm length
-    if( (aworm->wormpos == malloc(sizeof(struct pos) * len_max )) == NULL){
-        showDialog("Abbruch: Zu wenig SPeicher", "Bitte eine Taste druecken");
+    if((aworm->wormpos == malloc(sizeof(struct pos) * len_max )) == NULL){
+        showDialog("Abbruch: Zu wenig Speicher", "Bitte eine Taste druecken");
         exit(RES_FAILED); // No memory -> direct exit
     }
 
@@ -215,7 +215,7 @@ extern void moveWorm(struct board* aboard, struct worm* aworm, enum GameStates* 
 
 
 // A simple collision detection
-extern bool isInUseByWorm(struct worm* aworm, struct pos new_headpos) {
+/*extern bool isInUseByWorm(struct worm* aworm, struct pos new_headpos) {
     int i = aworm->headindex;
     bool collision = false;
 
@@ -224,12 +224,12 @@ extern bool isInUseByWorm(struct worm* aworm, struct pos new_headpos) {
         if(new_headpos.y == aworm->wormpos[i].y && new_headpos.x == aworm->wormpos[i].x) {
             collision = true;
         }
-        i = (i+1) % WORM_LENGTH;
+        i = (i+1) % ;
     } while (i != aworm->headindex && aworm->wormpos[i].x != UNUSED_POS_ELEM);    // Solange i ungleich theworm_headindex UND Koordinate an Stelle i nicht unused
 
     // Return what we found out
     return collision;
-}
+}*/
 
 // Setters
 extern void setWormHeading(struct worm* aworm, enum WormHeading dir) {

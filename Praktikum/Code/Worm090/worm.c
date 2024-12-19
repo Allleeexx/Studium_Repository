@@ -196,6 +196,7 @@ enum ResCodes doLevel(struct game_options* somegops, enum GameStates* agame_stat
 }
     // However, in this version we do not yet check for the reason.
     // There is no user feedback at the moment!
+    
     removeWorm(&theboard, &userworm);
     cleanupWorm(&userworm);
     cleanupBoard(&theboard);
