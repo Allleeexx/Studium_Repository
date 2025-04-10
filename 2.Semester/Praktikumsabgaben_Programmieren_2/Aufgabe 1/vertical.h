@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include "ufosim.h"
+using namespace std; 
 
 //Klassen
 class Vertical{

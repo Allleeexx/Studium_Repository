@@ -31,7 +31,7 @@ const string& Vertical::getId() const{
 }
 
 vector<float> Vertical::getPosition() const{
-    return {(sim->getX(), sim->getY(), sim->getZ())};
+    return {sim->getX(), sim->getY(), sim->getZ()};
 }
 
 float Vertical::getFtime() const{
@@ -68,6 +68,7 @@ vector<float> Vertical::wayPoint(const float x1,const float y1,const float x2,co
 }
 
 
+/*
 int main(){
     Vertical vert("r2d2");  //Hier rufe ich Konstruktor auf 
 
@@ -82,3 +83,4 @@ int main(){
     return 0;
 
 } // <-- Hier wird am Ende automatisch der Destruktor aufgerufen
+*/
