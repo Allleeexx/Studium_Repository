@@ -3,26 +3,24 @@
 
 #include <string>
 #include <vector>
+#include "ufosim.h"
 
 //Klassen
 class Vertical{
-    private:        //Da Minus davor
-        string type;                    //statisch
+    private:
+        static const string type;
         string id;
-        //Ufosim* sim;                  //In Aufgabe 1 steht das noch nicht einfügen, das kommt erst später
+        Ufosim* sim;
 
-    public:         //Da Plus davor
-        Vertical(string& pId);          // Konstruktor der Klasse
-        ~Vertical();                    // Destruktor der Klasse
-
-        //Getter    
-        string getType();               //statisch
-        string& getId();
-        vector <float> getPosition();
-        float getFtime();
-        void flfyToDest(float x; float y1; float heigth; int speed);
-        vector<float> waypoint(float x1; float x2; float y2; float h; float phi);       //statisch -> da im Klassendiagramm unterschtrichen
-
-}
+    public:
+        Vertical(const string& pld);
+        ~Vertical();
+        static string getType();
+        const string& getId() const;  //const hinten das Funktion keine Attribute ändern kann
+        vector<float> getPosition() const;
+        float getFtime() const;
+        void flyToDest(const float x, const float y, const float height, const int speed) const;
+        static vector<float> wayPoint(const float x1,const float y1,const float x2,const float y2,const float h,const float phi);
+};
 
 #endif
