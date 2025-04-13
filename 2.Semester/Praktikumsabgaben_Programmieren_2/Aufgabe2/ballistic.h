@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include "ufo.h"
+
 class Ballistic:Ufo{
     private:
         float takeOffAngle;

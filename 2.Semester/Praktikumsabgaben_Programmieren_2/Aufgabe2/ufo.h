@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include "ufosim.h"
 
 /*Abstrakte Klasse UFO*/
 class Ufo:Ufosim{
@@ -11,12 +12,12 @@ class Ufo:Ufosim{
         Ufosim* sim;
 
     public:
-        Vertical(const string& pld);
-        ~Vertical();        //soll virtuell sein
+        Ufo(const string& pld);
+        virtual ~Ufo();        //soll virtuell sein
         const string& getId() const;  //const hinten das Funktion keine Attribute ändern kann
         vector<float> getPosition() const;
         float getFtime() const;
-        void flyToDest(const float x, const float y, const float height, const int speed) const;        //soll virtuell sein
+        virtual flyToDest(const float x, const float y, const float height, const int speed) const;        //soll virtuell sein
         static vector<float> wayPoint(const float x1,const float y1,const float x2,const float y2,const float h,const float phi);
 };
 
