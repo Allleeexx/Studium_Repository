@@ -2,6 +2,7 @@
 #include "_mcpr_stm32f407.h"
 #include <inttypes.h>
 #include "display.h"
+#include <stdio.h>
 
 //Globale Variablen	-----------------------
 
@@ -190,7 +191,6 @@ int main(void){
 		}
 		
 		displayOutput();
-		
 		delay_function(50);
 	}
 	
