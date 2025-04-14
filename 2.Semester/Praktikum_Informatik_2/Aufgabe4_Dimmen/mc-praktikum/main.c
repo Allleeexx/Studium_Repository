@@ -91,7 +91,6 @@ void LEDs_Write(uint16_t data){
 
 void TIM7_init(){
 	RCC->APB1ENR |= 1<<5;			//0010 0000
-	GPIOD->ODR |= 1<<13;
 	TIM7->DIER |= 1;		//Interrupt
 	TIM7->PSC = 83;			//prescaler	
 	TIM7->ARR = 999;		//Auto reload register
@@ -108,17 +107,19 @@ void TIM7_IRQHandler(void){
     // Blinken der grünen LED mit 1Hz
     if (tasterStatus == 1) {
         blinkCounter++;
-        if (blinkCounter >= 500) {  // Alle 500ms Blinken umschalten (1Hz)
-            GPIOD->ODR ^= 1 << 24;  // Grüne LED umschalten
-            blinkCounter = 0;
-        }
+        if (blinkCounter%1000 < 500) {  // Alle 500ms Blinken umschalten (1Hz)
+            GPIOD->ODR |= 1 << 24;  // Grüne LED umschalten
+        }else{
+						GPIOD->ODR &= ~(1<<24);	//Ausschalten
+				}
     }
 
     // 10s Timer für das Ausschalten der Hintergrundbeleuchtung
     if (tasterStatus == 0 && backgroundOffTimer > 0) {
         backgroundOffTimer--;
         if (backgroundOffTimer == 0) {
-            LCD_ClearDisplay(0xFE00);  // Display aus
+            LCD_ClearDisplay(0xFE00);  // Text auf Display löschen
+						GPIOD->ODR &= ~(1<<13);			//Pin aus alles aus die Maus
         }
     }
 	return;
@@ -166,7 +167,6 @@ void PWM_Init(){
 	TIM4->CR1 |= 0x0080;		//ARPE = 1
 	//Timer starten
 	TIM4->CR1 |= 0x0001;		//CEN = 1
-	
 }
 
 int main(void){
@@ -216,18 +216,19 @@ int main(void){
 	//Diese Zeit, die runterzählt auf dem Display anzeigen
 	//Hauptschleife alle 50ms durchlaufen
 	while(1){
+		uint32_t ms_start = ms;
 		if((GPIOD->IDR&1) != 0){
 			tasterStatus = 1;
 			GPIOD->ODR |= 1<<13;
 			backgroundOffTimer = 10*1000;
-			LCD_ClearDisplay(0xFE00);
+			//LCD_ClearDisplay(0xFE00);
 		}else{
 			tasterStatus = 0;
-			GPIOD->ODR &= ~(1<<13);
 		}
 		
 		displayOutput();
-		delay_function(50);
+		uint32_t ms_div = ms_start -ms;
+		delay_function(50-ms_div);
 	}
 	
 		
