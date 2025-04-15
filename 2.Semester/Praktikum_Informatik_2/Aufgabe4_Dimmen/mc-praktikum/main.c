@@ -15,7 +15,7 @@ int loop_timer = 0;
 int led_state = 0;
 int display_on = 0;
 int last_button_state = 0;
-int backgroundOffTimer = 0;
+int backgroundOffTimer = 10*1000;
 
 //Ende Globale Variablen ------------------
 
@@ -44,7 +44,7 @@ void LCD_Output16BitWord(uint16_t data){
 	GPIOD->ODR |= (data&0x000C)>>2;
 	
 	//13 bis 15 für 8 bis 10			1110 0000 0000 0000 	-> 0000 0111 0000 0000 	--> bedeutet 5 nach rechts
-	GPIOD->ODR |= (data&0xC000)>>5;
+	GPIOD->ODR |= (data&0xE000)>>5;
 	return;
 }
 
@@ -58,7 +58,7 @@ void LEDs_initPorts(){
 	GPIOD->ODR |= 1<<13;
 	*/
 	
-	GPIOD->MODER |= 0x50554405;			//0101 0000	0101 0101 0100 0100 0000 0101		//Für D			
+	GPIOD->MODER |= 0x51554405;			//0101 0000	0101 0101 0100 0100 0000 0101		//Für D			
 	GPIOE->MODER |= 0x55554000;			//0101 0101 0101 0101 0100 0000 0000 0000		//Für E
 	
 	//PD5 an
@@ -108,9 +108,9 @@ void TIM7_IRQHandler(void){
     if (tasterStatus == 1) {
         blinkCounter++;
         if (blinkCounter%1000 < 500) {  // Alle 500ms Blinken umschalten (1Hz)
-            GPIOD->ODR |= 1 << 24;  // Grüne LED umschalten
+            GPIOD->ODR |= 1 << 12;  // Grüne LED umschalten
         }else{
-						GPIOD->ODR &= ~(1<<24);	//Ausschalten
+						GPIOD->ODR &= ~(1<<12);	//Ausschalten
 				}
     }
 
@@ -118,7 +118,7 @@ void TIM7_IRQHandler(void){
     if (tasterStatus == 0 && backgroundOffTimer > 0) {
         backgroundOffTimer--;
         if (backgroundOffTimer == 0) {
-            LCD_ClearDisplay(0xFE00);  // Text auf Display löschen
+            //LCD_ClearDisplay(0xFE00);  // Text auf Display löschen
 						GPIOD->ODR &= ~(1<<13);			//Pin aus alles aus die Maus
         }
     }
@@ -127,7 +127,7 @@ void TIM7_IRQHandler(void){
 
 void displayOutput(){
 	int DisplayTime = overalltimer/1000;
-	LCD_ClearDisplay(0xFE00);	//Display clearen
+	//LCD_ClearDisplay(0xFE00);	//Display clearen
 	char wortAnzeige[32];		//Um zu konverten
 	sprintf(wortAnzeige, "%d", DisplayTime);
 	LCD_WriteString(10, 10, 0xFFFF, 0x0000, wortAnzeige);		//0x0000(Black) 0xFFFF (White)   0xF00(Red)
@@ -207,7 +207,9 @@ int main(void){
 	TIM7_init();
 	LCD_Init();
 	LCD_ClearDisplay(0xFE00);
-	LCD_WriteString( 10, 10, 0xFFFF, 0x0000, "Hallo Welt");
+	//LCD_WriteString( 10, 10, 0xFFFF, 0x0000, "Hallo Welt");
+	
+	GPIOD->ODR &= ~(1<<13);
 	
 	//Hier dann folgende Abfolge rein 
 	/*-----------------------------------------------------------*/
@@ -217,7 +219,7 @@ int main(void){
 	//Hauptschleife alle 50ms durchlaufen
 	while(1){
 		uint32_t ms_start = ms;
-		if((GPIOD->IDR&1) != 0){
+		if((GPIOA->IDR&1) != 0){
 			tasterStatus = 1;
 			GPIOD->ODR |= 1<<13;
 			backgroundOffTimer = 10*1000;

@@ -5,11 +5,11 @@
 <h2>Tool Versions:</h2>
 IDE-Version: µVision V5.42.0.0
 Copyright (C) 2025 ARM Ltd and ARM Germany GmbH. All rights reserved.
-License Information: Al Re, thi, LIC=----
+License Information: u THI, Technische Hochschule Ingolstadt, LIC=----
  
 Tool Versions:
 Toolchain:       MDK-Lite  Version: 5.42.0.0
-Toolchain Path:  C:\Users\alexa\AppData\Local\Keil_v5\ARM\ARMCLANG\Bin
+Toolchain Path:  C:\bin\Keil_v5.42\ARM\ARMCLANG\Bin
 C Compiler:      ArmClang.exe V6.23
 Assembler:       Armasm.exe V6.23
 Linker/Locator:  ArmLink.exe V6.23
@@ -17,29 +17,27 @@ Library Manager: ArmAr.exe V6.23
 Hex Converter:   FromElf.exe V6.23
 CPU DLL:         SARMCM3.DLL V5.42.0.0
 Dialog DLL:      DCM.DLL V1.17.5.0
-Target DLL:      UL2CM3.DLL V1.164.14.0
+Target DLL:      STLink\ST-LINKIII-KEIL_SWO.dll V3.3.0.0
 Dialog DLL:      TCM.DLL V1.56.6.0
  
 <h2>Project:</h2>
-C:\Users\alexa\Documents\Studium\2. Semester\Informatik Praktikum 2\mc-praktikum\MC_Praktikum.uvprojx
-Project File Date:  04/12/2025
+C:\Users\alr9045\Studium_Repository\2.Semester\Praktikum_Informatik_2\Aufgabe4_Dimmen\mc-praktikum\MC_Praktikum.uvprojx
+Project File Date:  04/15/2025
 
 <h2>Output:</h2>
-*** Using Compiler 'V6.23', folder: 'C:\Users\alexa\AppData\Local\Keil_v5\ARM\ARMCLANG\Bin'
-Rebuild target 'Simulation - Flash'
+*** Using Compiler 'V6.23', folder: 'C:\bin\Keil_v5.42\ARM\ARMCLANG\Bin'
+Rebuild target 'Discovery Board - RAM'
 assembling startup_stm32f407xx.s...
 compiling system_stm32f4xx.c...
-main.c(130): error: call to undeclared library function 'sprintf' with type 'int (char *restrict, const char *restrict, ...)'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
-  130 |         sprintf(wortAnzeige, "%d", DisplayTime);
-      |         ^
-main.c(130): note: include the header <stdio.h> or explicitly provide a declaration for 'sprintf'
-main.c(136): warning: unused variable 'i' [-Wunused-variable]
-  136 |         uint32_t i = 0;
-      |                  ^
-1 warning and 1 error generated.
-compiling main.c...
 compiling _mcpr_stm32f407.c...
-".\Objects\MCPraktikum.axf" - 1 Error(s), 1 Warning(s).
+main.c(173): warning: unused variable 'i' [-Wunused-variable]
+  173 |         uint32_t i = 0;
+      |                  ^
+1 warning generated.
+compiling main.c...
+linking...
+Program Size: Code=9216 RO-data=9188 RW-data=8 ZI-data=1648  
+".\Objects\MCPraktikum.axf" - 0 Error(s), 1 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -56,21 +54,20 @@ Package Vendor: Keil
    * Component: Startup Version: 2.6.3
 
 <h2>Collection of Component include folders:</h2>
-  ./RTE/_Simulation_-_Flash
-  C:/Users/alexa/AppData/Local/Arm/Packs/ARM/CMSIS/6.1.0/CMSIS/Core/Include
-  C:/Users/alexa/AppData/Local/Arm/Packs/Keil/STM32F4xx_DFP/2.17.1/Drivers/CMSIS/Device/ST/STM32F4xx/Include
+  ./RTE/_Discovery_Board_-_RAM
+  C:/bin/Keil_v5.42_Packs/ARM/CMSIS/6.1.0/CMSIS/Core/Include
+  C:/bin/Keil_v5.42_Packs/Keil/STM32F4xx_DFP/2.17.1/Drivers/CMSIS/Device/ST/STM32F4xx/Include
 
 <h2>Collection of Component Files used:</h2>
 
    * Component: ARM::CMSIS:CORE@6.1.0
 
    * Component: Keil::Device:Startup@2.6.3
-      Source file:   MDK/Device/Source/ARM/STM32F40xxx_41xxx_OPT.s
       Source file:   MDK/Device/Source/ARM/STM32F4xx_OTP.s
-      Source file:   Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/arm/startup_stm32f407xx.s
       Include file:  Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f4xx.h
+      Source file:   MDK/Device/Source/ARM/STM32F40xxx_41xxx_OPT.s
+      Source file:   Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/arm/startup_stm32f407xx.s
       Source file:   Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c
-Target not created.
 Build Time Elapsed:  00:00:00
 </pre>
 </body>
