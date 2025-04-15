@@ -15,7 +15,7 @@ int loop_timer = 0;
 int led_state = 0;
 int display_on = 0;
 int last_button_state = 0;
-int backgroundOffTimer = 0;
+int backgroundOffTimer = 10*1000;
 
 //Ende Globale Variablen ------------------
 
@@ -44,7 +44,7 @@ void LCD_Output16BitWord(uint16_t data){
 	GPIOD->ODR |= (data&0x000C)>>2;
 	
 	//13 bis 15 für 8 bis 10			1110 0000 0000 0000 	-> 0000 0111 0000 0000 	--> bedeutet 5 nach rechts
-	GPIOD->ODR |= (data&0xC000)>>5;
+	GPIOD->ODR |= (data&0xE000)>>5;
 	return;
 }
 
@@ -58,7 +58,7 @@ void LEDs_initPorts(){
 	GPIOD->ODR |= 1<<13;
 	*/
 	
-	GPIOD->MODER |= 0x50554405;			//0101 0000	0101 0101 0100 0100 0000 0101		//Für D			
+	GPIOD->MODER |= 0x51554405;			//0101 0000	0101 0101 0100 0100 0000 0101		//Für D			
 	GPIOE->MODER |= 0x55554000;			//0101 0101 0101 0101 0100 0000 0000 0000		//Für E
 	
 	//PD5 an
@@ -91,7 +91,6 @@ void LEDs_Write(uint16_t data){
 
 void TIM7_init(){
 	RCC->APB1ENR |= 1<<5;			//0010 0000
-	GPIOD->ODR |= 1<<13;
 	TIM7->DIER |= 1;		//Interrupt
 	TIM7->PSC = 83;			//prescaler	
 	TIM7->ARR = 999;		//Auto reload register
@@ -99,7 +98,7 @@ void TIM7_init(){
 	NVIC_SetPriority(TIM7_IRQn, 5);		//Timer Prio
 	TIM7->CR1 |=1;		//Timer ein
 }
-	
+
 void TIM7_IRQHandler(void){
 	TIM7->SR &= 0xFFFE;  // Interrupt-Flag löschen
     ms++;  // 1ms hochzählen
@@ -108,17 +107,19 @@ void TIM7_IRQHandler(void){
     // Blinken der grünen LED mit 1Hz
     if (tasterStatus == 1) {
         blinkCounter++;
-        if (blinkCounter >= 500) {  // Alle 500ms Blinken umschalten (1Hz)
-            GPIOD->ODR ^= 1 << 24;  // Grüne LED umschalten
-            blinkCounter = 0;
-        }
+        if (blinkCounter%1000 < 500) {  // Alle 500ms Blinken umschalten (1Hz)
+            GPIOD->ODR |= 1 << 12;  // Grüne LED umschalten
+        }else{
+						GPIOD->ODR &= ~(1<<12);	//Ausschalten
+				}
     }
 
     // 10s Timer für das Ausschalten der Hintergrundbeleuchtung
     if (tasterStatus == 0 && backgroundOffTimer > 0) {
         backgroundOffTimer--;
         if (backgroundOffTimer == 0) {
-            LCD_ClearDisplay(0xFE00);  // Display aus
+            //LCD_ClearDisplay(0xFE00);  // Text auf Display löschen
+						GPIOD->ODR &= ~(1<<13);			//Pin aus alles aus die Maus
         }
     }
 	return;
@@ -126,12 +127,47 @@ void TIM7_IRQHandler(void){
 
 void displayOutput(){
 	int DisplayTime = overalltimer/1000;
-	LCD_ClearDisplay(0xFE00);	//Display clearen
+	//LCD_ClearDisplay(0xFE00);	//Display clearen
 	char wortAnzeige[32];		//Um zu konverten
 	sprintf(wortAnzeige, "%d", DisplayTime);
 	LCD_WriteString(10, 10, 0xFFFF, 0x0000, wortAnzeige);		//0x0000(Black) 0xFFFF (White)   0xF00(Red)
 	return;
 }	
+
+void PWM_Init(){
+	/*Das hier für PWM Dimmen
+		- Pin D13 ist das Display
+		- AFR2 und AFRH
+		- Alternate Function
+		- PD13 TIM4_CH2 = Capture / Compare Reg. 2			-----> 2 ins AFR schreiben
+	*/
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;			//Aktiviert Port D
+	RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;			//Setzt das Bit für Timer 4
+
+	GPIOD->MODER &= 0x0C000000;				//Die bits für AF löschen, damit wir sie später wieder setzen können		---->   0000 0000  
+	GPIOD->ODR |= 0x08000000;
+	
+	GPIOD->AFR[1] &= ~(0x0000F000);	//Bits 20-23 löschen
+	GPIOD->AFR[1] |= 0x00002000;		//AF2 Setzen
+	
+	//PMW 150Hz
+	TIM4->PSC = 83; //84MHz
+	TIM4->ARR = 6666;		//1MHz / 6666 = 150Hz
+	TIM4->CCR2 = 1000;		//Helligkeit.. Display eher dunkel
+	
+	
+	//PWM Mode 1 auf Kanal 2
+	TIM4->CCMR1 &= ~(0x00000020);		//Bits 8-15 löschen
+	TIM4->CCMR1 |= 0x00000010;		//Ganz ehrlich keine Ahnung was das hier macht. Unbedingt nachfragen
+	
+	TIM4->CCER &= ~(0x00000020);		//Bit 5 löschen	-> CC2P = 0
+	TIM4->CCER |= 0x00000010;				//SET Bit 4	-> CC2E = 1
+	
+	//Auto reload aktivieren
+	TIM4->CR1 |= 0x0080;		//ARPE = 1
+	//Timer starten
+	TIM4->CR1 |= 0x0001;		//CEN = 1
+}
 
 int main(void){
 	uint32_t i = 0;
@@ -171,7 +207,9 @@ int main(void){
 	TIM7_init();
 	LCD_Init();
 	LCD_ClearDisplay(0xFE00);
-	LCD_WriteString( 10, 10, 0xFFFF, 0x0000, "Hallo Welt");
+	//LCD_WriteString( 10, 10, 0xFFFF, 0x0000, "Hallo Welt");
+	
+	GPIOD->ODR &= ~(1<<13);
 	
 	//Hier dann folgende Abfolge rein 
 	/*-----------------------------------------------------------*/
@@ -180,18 +218,19 @@ int main(void){
 	//Diese Zeit, die runterzählt auf dem Display anzeigen
 	//Hauptschleife alle 50ms durchlaufen
 	while(1){
-		if((GPIOD->IDR&1) != 0){
+		uint32_t ms_start = ms;
+		if((GPIOA->IDR&1) != 0){
 			tasterStatus = 1;
 			GPIOD->ODR |= 1<<13;
 			backgroundOffTimer = 10*1000;
-			LCD_ClearDisplay(0xFE00);
+			//LCD_ClearDisplay(0xFE00);
 		}else{
 			tasterStatus = 0;
-			GPIOD->ODR &= ~(1<<13);
 		}
 		
 		displayOutput();
-		delay_function(50);
+		uint32_t ms_div = ms_start -ms;
+		delay_function(50-ms_div);
 	}
 	
 		
