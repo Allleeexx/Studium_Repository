@@ -107,6 +107,7 @@ void TIM7_IRQHandler(void){
     // Blinken der grünen LED mit 1Hz
     if (tasterStatus == 1) {
         blinkCounter++;
+			TIM4->CCR2 = 3000;
         if (blinkCounter%1000 < 500) {  // Alle 500ms Blinken umschalten (1Hz)
             GPIOD->ODR |= 1 << 12;  // Grüne LED umschalten
         }else{
@@ -119,7 +120,10 @@ void TIM7_IRQHandler(void){
         backgroundOffTimer--;
         if (backgroundOffTimer == 0) {
             //LCD_ClearDisplay(0xFE00);  // Text auf Display löschen
-						GPIOD->ODR &= ~(1<<13);			//Pin aus alles aus die Maus
+						for(int y=999; y>=99; y=y-1){
+							TIM4->CCR2 = y;
+						}
+						//GPIOD->ODR &= ~(1<<13);			//Pin aus alles aus die Maus
         }
     }
 	return;
@@ -141,32 +145,26 @@ void PWM_Init(){
 		- Alternate Function
 		- PD13 TIM4_CH2 = Capture / Compare Reg. 2			-----> 2 ins AFR schreiben
 	*/
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;			//Aktiviert Port D
-	RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;			//Setzt das Bit für Timer 4
+	//RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;			//Aktiviert Port D
+	RCC->APB1ENR |= 1<<2;			//Setzt das Bit für Timer 4
 
-	GPIOD->MODER &= 0x0C000000;				//Die bits für AF löschen, damit wir sie später wieder setzen können		---->   0000 0000  
-	GPIOD->ODR |= 0x08000000;
+	GPIOD->MODER &= ~(0b11<<26);				//Die bits für AF löschen, damit wir sie später wieder setzen können		
+	GPIOD->MODER |= 1<<27;
+	//GPIOD->ODR |= 0x08000000;
 	
-	GPIOD->AFR[1] &= ~(0x0000F000);	//Bits 20-23 löschen
-	GPIOD->AFR[1] |= 0x00002000;		//AF2 Setzen
+	GPIOD->AFR[1] &= ~(0b1111<<20);	//Bits 20-23 löschen 0000 0000 1111 0000 0000 0000 0000 0000
+	GPIOD->AFR[1] |= 1<<21;		//AF2 Setzen
 	
+	TIM4->CR1 |= 1;
+	TIM4->CCMR1 |= 0b110 <<12;
+	TIM4->CCER |= 1<<4;
+	
+	TIM4->CCR2 = 99;
 	//PMW 150Hz
-	TIM4->PSC = 83; //84MHz
-	TIM4->ARR = 6666;		//1MHz / 6666 = 150Hz
-	TIM4->CCR2 = 1000;		//Helligkeit.. Display eher dunkel
+	TIM4->PSC = 559; //84MHz		-> waren 83
+	TIM4->ARR = 999;		//1MHz / 6666 = 150Hz
+	TIM4->CCR2 = 99;		//Helligkeit.. Display eher dunkel		10000
 	
-	
-	//PWM Mode 1 auf Kanal 2
-	TIM4->CCMR1 &= ~(0x00000020);		//Bits 8-15 löschen
-	TIM4->CCMR1 |= 0x00000010;		//Ganz ehrlich keine Ahnung was das hier macht. Unbedingt nachfragen
-	
-	TIM4->CCER &= ~(0x00000020);		//Bit 5 löschen	-> CC2P = 0
-	TIM4->CCER |= 0x00000010;				//SET Bit 4	-> CC2E = 1
-	
-	//Auto reload aktivieren
-	TIM4->CR1 |= 0x0080;		//ARPE = 1
-	//Timer starten
-	TIM4->CR1 |= 0x0001;		//CEN = 1
 }
 
 int main(void){
@@ -175,6 +173,8 @@ int main(void){
 	mcpr_SetSystemCoreClock();
 
 	LEDs_initPorts();
+	LCD_Init();
+	LCD_ClearDisplay(0xFE00);
 	
 	/*		----- Diese While Schleife ist für Blinky-------
 	while( 1 ) {
@@ -204,12 +204,13 @@ int main(void){
 	*/
 	
 	//Aufgabe 3
+	PWM_Init();
 	TIM7_init();
-	LCD_Init();
-	LCD_ClearDisplay(0xFE00);
+	GPIOD->ODR |= 1<<13;
+
 	//LCD_WriteString( 10, 10, 0xFFFF, 0x0000, "Hallo Welt");
 	
-	GPIOD->ODR &= ~(1<<13);
+	
 	
 	//Hier dann folgende Abfolge rein 
 	/*-----------------------------------------------------------*/
@@ -221,6 +222,7 @@ int main(void){
 		uint32_t ms_start = ms;
 		if((GPIOA->IDR&1) != 0){
 			tasterStatus = 1;
+			TIM4->CCR2 = 999;
 			GPIOD->ODR |= 1<<13;
 			backgroundOffTimer = 10*1000;
 			//LCD_ClearDisplay(0xFE00);
