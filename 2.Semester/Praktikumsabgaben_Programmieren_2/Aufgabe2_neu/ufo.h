@@ -7,13 +7,13 @@
 using namespace std; 
 
 class Ufo{
-    public:
+    private:
         string id;
     
     protected:
         Ufosim* sim;
 
-    private:
+    public:
         Ufo(const string& pId);
         virtual ~Ufo();
         const string& getId() const;  //const hinten das Funktion keine Attribute ändern kann
