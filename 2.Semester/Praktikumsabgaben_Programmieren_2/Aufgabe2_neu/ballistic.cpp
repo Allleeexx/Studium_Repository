@@ -4,19 +4,21 @@
 #include "ballistic.h"
 #include "vertical.h"
 
-Ballistic::Ballistic(const string& pId, const float pTakeOffAngle, const float pLandingAngle){
-    id = pId;
-    if((0<pTakeOffAngle<=90)){
+Ballistic::Ballistic(const string& pId, const float pTakeOffAngle, const float pLandingAngle): Ufo(pId){
+    if(pLandingAngle > 0 && pLandingAngle <=90){//wenn Gültig
+        landingAngle = pLandingAngle;
+    }else{  //ansonsten Default Winkel setzen
+        landingAngle = 45.0;
+    }
+
+    
+    if(pTakeOffAngle > 0 && pTakeOffAngle <= 90){
         takeOffAngle = pTakeOffAngle;
     }else{  //Hier die Default-Werte
         takeOffAngle = 45.0;
     }
 
-    if(0<pLandingAngle<=90){
-        landingAngle = pLandingAngle;
-    }else{
-        landingAngle = 45.0;
-    }
+    
 
 }
 

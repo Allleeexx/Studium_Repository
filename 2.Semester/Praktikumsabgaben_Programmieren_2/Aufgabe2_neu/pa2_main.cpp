@@ -22,17 +22,18 @@ int main(){
     cout <<"Triff deine Auswahl: \nVertical ----> 0\nBallistic ----> 1" << "\n";
     cin >> usereingabe;
 
-    if(usereingabe == 0 || usereingabe == 1){
-        if(usereingabe == 0){            //Dann mit Vert
-            ufos[0].flyToDest(5.0, -1.5, 4.0, 10);
-            ufos[0].flyToDest(-3.0, 0.0, 8.0, 5);
+        if(usereingabe == 0 || usereingabe == 1){
+            if(usereingabe == 0){            //Dann mit Vert
+                ufos[0].flyToDest(5.0, -1.5, 4.0, 10);
+                ufos[0].flyToDest(-3.0, 0.0, 8.0, 5);
+            }else{
+                ufos[1].flyToDest(5.0, -1.5, 4.0, 10);
+                ufos[1].flyToDest(-3.0, 0.0, 8.0, 5);
+            }
         }else{
-            ufos[1].flyToDest(5.0, -1.5, 4.0, 10);
-            ufos[1].flyToDest(-3.0, 0.0, 8.0, 5);
+            cout << "Falsche Eingabe";
         }
-    }else{
-        cout << "Falsche Eingabe";
-    }
+    
 /*
     switch (usereingabe)
     {

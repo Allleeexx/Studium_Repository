@@ -3,9 +3,7 @@
 #include <iostream>
 #include "vertical.h"
 
-Vertical::Vertical (const string& pId){
-    id = pId;
-}
+Vertical::Vertical (const string& pId) : Ufo(pId){}
 
 Vertical::~Vertical(){}
 
