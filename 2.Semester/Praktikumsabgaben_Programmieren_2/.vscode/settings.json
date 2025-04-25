@@ -59,6 +59,8 @@
   "files.associations": {
     "string": "cpp",
     "vector": "cpp",
-    "chrono": "cpp"
+    "chrono": "cpp",
+    "cmath": "cpp",
+    "iostream": "cpp"
   }
 }

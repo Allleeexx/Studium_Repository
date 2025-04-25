@@ -1,5 +1,3 @@
-
-#include <cmath>
 #include <iostream>
 #include "ballistic.h"
 #include "vertical.h"
@@ -35,10 +33,7 @@ float Ballistic::getLandingAngle() const{
 void Ballistic::flyToDest(const float x, const float y, const float height, const int speed) const {
     vector<float> erstesZiel = firstWaypoint(x, y, height);
     vector<float> zweitesZiel = secondWaypoint(x, y, height); 
-
-    //Testausgabe, ob ich die richtigen Werte habe
-    cout << "Koordinaten von Ziel 1: \n X:" << erstesZiel[0] << "Y: " << erstesZiel[1] << "\n"; 
-    cout << "Koordinaten von Ziel 2: \n X:" << zweitesZiel[0] << "Y: " << zweitesZiel[1] << "\n"; 
+ 
     //3 mal Fly to aufrufen
     sim->flyTo(erstesZiel[0], erstesZiel[1], height, speed, speed);       //Fliegen schräg zu x1,y1
     sim->flyTo(zweitesZiel[0], zweitesZiel[1], height, speed, speed);       //Fliegen von x1, y1 weiter nach x1,y2
