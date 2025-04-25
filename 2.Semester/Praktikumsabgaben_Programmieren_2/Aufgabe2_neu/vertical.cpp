@@ -1,11 +1,10 @@
-#include <iostream>
 #include "vertical.h"
 
 Vertical::Vertical (const string& pId) : Ufo(pId){}
 
 Vertical::~Vertical(){}
 
- void Vertical::flyToDest(const float x, const float y, const float height, int speed) const {
+ void Vertical::flyToDest(const float x, const float y, const float height,const int speed) const {
     //mit flyto von Ufosim wird von aktuelller  Pos der Drohne in gerader Linie zu Punkt            -> Fluggeschw. ist vFlight
     //Nach Flug geschw. vPost       -> wen vPost 0 steht die DrWohne 
     //Wenn vPost = vFlight      --> Dann fliegt Drohne mit gleicher Geschwindigkeit

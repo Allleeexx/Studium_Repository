@@ -1,4 +1,3 @@
-#include <iostream>
 #include "ballistic.h"
 #include "vertical.h"
 
