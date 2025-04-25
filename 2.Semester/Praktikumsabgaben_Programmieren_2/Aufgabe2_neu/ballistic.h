@@ -3,7 +3,6 @@
 
 #include <string>
 #include <vector>
-#include "ufosim.h"
 #include "ufo.h"
 using namespace std; 
 
