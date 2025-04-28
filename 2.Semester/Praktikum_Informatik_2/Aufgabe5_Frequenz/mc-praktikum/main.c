@@ -16,10 +16,12 @@ int led_state = 0;
 int display_on = 0;
 int last_button_state = 0;
 int backgroundOffTimer = 10*1000;
+
 volatile uint32_t last_capture = 0;
 volatile uint32_t capture_diff = 0;
 volatile uint32_t frequency = 0;
 
+int dimmerAktiv = 0;
 
 //Ende Globale Variablen ------------------
 
@@ -119,17 +121,25 @@ void TIM7_IRQHandler(void){
 				}
     }
 
-    // 10s Timer für das Ausschalten der Hintergrundbeleuchtung
-    if (tasterStatus == 0 && backgroundOffTimer > 0) {
-        backgroundOffTimer--;
-        if (backgroundOffTimer == 0) {
-            //LCD_ClearDisplay(0xFE00);  // Text auf Display löschen
-						for(int y=999; y>=99; y=y-1){
-							TIM4->CCR2 = y;
-						}
-						//GPIOD->ODR &= ~(1<<13);			//Pin aus alles aus die Maus
-        }
-    }
+    // Hintergrundbeleuchtung runterdimmen
+		static int dimmCounter = 0;
+		if (tasterStatus == 0) {
+			if (backgroundOffTimer > 0) {
+				backgroundOffTimer--;
+				if (backgroundOffTimer == 0) {
+					dimmerAktiv = 1; // Starte Dimmung
+				}
+			}
+		}
+
+		// Dimmen wenn aktiv
+		if (dimmerAktiv && dimmCounter++ % 10 == 0) {  // alle 10ms
+			if (TIM4->CCR2 > 99) {
+				TIM4->CCR2--;   // langsam runterdimmen
+			} else {
+				dimmerAktiv = 0; // fertig gedimmt
+			}
+		}
 	return;
 }
 
@@ -141,10 +151,10 @@ void displayOutput(){
 	sprintf(wortAnzeige, "Time: %d", DisplayTime);
 	LCD_WriteString(10, 10, 0xFFFF, 0x0000, wortAnzeige);		//0x0000(Black) 0xFFFF (White)   0xF00(Red)
 	
-	sprintf(wortAnzeige, "Ticks: %lu", capture_diff);
+	sprintf(wortAnzeige, "Ticks: %u", capture_diff);
 	LCD_WriteString(10, 30, 0xFFFF, 0x0000, wortAnzeige);
 	
-	sprintf(wortAnzeige, "Freq: %lu", frequency);
+	sprintf(wortAnzeige, "Freq: %u", frequency);
 	LCD_WriteString(10, 30, 0xFFFF, 0x0000, wortAnzeige);
 	return;
 }	
