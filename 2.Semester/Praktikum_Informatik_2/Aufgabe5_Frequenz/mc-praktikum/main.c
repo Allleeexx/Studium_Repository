@@ -24,7 +24,7 @@ volatile uint32_t frequency = 0;
 int dimmerAktiv = 0;
 
 uint16_t z2 = 0;
-uint16_t difference = 0;
+uint16_t dt = 0;
 uint16_t z1 = 0;
 //Ende Globale Variablen ------------------
 
@@ -143,10 +143,10 @@ void displayOutput(){
 	sprintf(wortAnzeige, "Time: %d", DisplayTime);
 	LCD_WriteString(10, 10, 0xFFFF, 0x0000, wortAnzeige);		//0x0000(Black) 0xFFFF (White)   0xF00(Red)
 	
-	sprintf(wortAnzeige, "Ticks: %u", difference);
+	sprintf(wortAnzeige, "Ticks: %8d", dt);
 	LCD_WriteString(10, 30, 0xFFFF, 0x0000, wortAnzeige);
 	
-	sprintf(wortAnzeige, "Freq: %u", frequency);
+	sprintf(wortAnzeige, "Freq: %8d", frequency);
 	LCD_WriteString(10, 50, 0xFFFF, 0x0000, wortAnzeige);
 	return;
 }	
@@ -210,7 +210,7 @@ void Frequenz_Init(){
 
 void TIM8_BRK_TIM12_IRQHandler(void){
 	z2 = TIM12->CCR1;		//Wert der in Capture ist
-	difference = z2-z1;					//Taktanzahl zwischen 2 Flanken
+	dt = z2-z1;					//Taktanzahl zwischen 2 Flanken
 	z1 = TIM12->CCR1;
 }
 
