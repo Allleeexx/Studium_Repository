@@ -23,6 +23,9 @@ volatile uint32_t frequency = 0;
 
 int dimmerAktiv = 0;
 
+uint16_t z2 = 0;
+uint16_t difference = 0;
+uint16_t z1 = 0;
 //Ende Globale Variablen ------------------
 
 void delay_function(uint16_t time){
@@ -119,27 +122,16 @@ void TIM7_IRQHandler(void){
         }else{
 						GPIOD->ODR &= ~(1<<12);	//Ausschalten
 				}
+				backgroundOffTimer = 10000;
     }
 
-    // Hintergrundbeleuchtung runterdimmen
-		static int dimmCounter = 0;
-		if (tasterStatus == 0) {
-			if (backgroundOffTimer > 0) {
-				backgroundOffTimer--;
-				if (backgroundOffTimer == 0) {
-					dimmerAktiv = 1; // Starte Dimmung
-				}
-			}
+		if (tasterStatus == 0 && backgroundOffTimer > 0) {
+			backgroundOffTimer--;
 		}
-
-		// Dimmen wenn aktiv
-		if (dimmerAktiv && dimmCounter++ % 10 == 0) {  // alle 10ms
-			if (TIM4->CCR2 > 99) {
-				TIM4->CCR2--;   // langsam runterdimmen
-			} else {
-				dimmerAktiv = 0; // fertig gedimmt
-			}
-		}
+				
+    if (backgroundOffTimer == 0) {
+			if( TIM4->CCR2 > 99 ) TIM4->CCR2 = TIM4->CCR2 - 1;
+    }
 	return;
 }
 
@@ -151,11 +143,11 @@ void displayOutput(){
 	sprintf(wortAnzeige, "Time: %d", DisplayTime);
 	LCD_WriteString(10, 10, 0xFFFF, 0x0000, wortAnzeige);		//0x0000(Black) 0xFFFF (White)   0xF00(Red)
 	
-	sprintf(wortAnzeige, "Ticks: %u", capture_diff);
+	sprintf(wortAnzeige, "Ticks: %u", difference);
 	LCD_WriteString(10, 30, 0xFFFF, 0x0000, wortAnzeige);
 	
 	sprintf(wortAnzeige, "Freq: %u", frequency);
-	LCD_WriteString(10, 30, 0xFFFF, 0x0000, wortAnzeige);
+	LCD_WriteString(10, 50, 0xFFFF, 0x0000, wortAnzeige);
 	return;
 }	
 
@@ -192,50 +184,34 @@ void PWM_Init(){
 void Frequenz_Init(){
 	
 	//Peripheriekonfiguration
-	RCC->AHB1ENR |= 1<<2;	//B aktivieren
-	/*
-	GPIOB->MODER |= 1<<28|1<<30;			//Doppelte von 14 und 15 für Moder		//Für B
-	GPIOB->ODR |= 1<<14 | 1<<15;		//PB14 und PB15
-	*/
-	
-	GPIOB->MODER &= ~(3 <<28);	//3 = 0b11		-> 0xCFFFFFFF
-	GPIOB->MODER |= (2<<28);		//2 = 0b10 = Alternate Function
-	
-	GPIOB->AFR[1] &= ~(0xF << ((14-8)*4));
-	GPIOB->AFR[1] |= (9<<((14-8)*4));
+	RCC->AHB1ENR |= 1<<1;	//B aktivieren
+	GPIOB->MODER |= 1<<29;		//PB14 auf Alternate Function
+	GPIOB->AFR[1] |= 1<<27 | 1<<24;
 	
 	//Timer12 Konfiguration
 	RCC->APB1ENR |= 1<<6; 		//Timer 12 aktivieren
-	TIM12->PSC = 83;
+	TIM12->PSC = 0;
 	TIM12->ARR = 0xFFFF;
 	
 	//input Capture Modus auf Channel 1
-	TIM12->CCMR1 &= ~TIM_CCMR1_CC1S;
-	TIM12->CCMR1 |= TIM_CCMR1_CC1S_0;	//CC1S = 01 (TT1)
+	TIM12->CCMR1 |= 1;
 	
 	//Cap bei steigender Flanke und aktivieren
-	TIM12->CCER &= ~TIM_CCER_CC1P;
-	TIM12->CCER |= TIM_CCER_CC1E;	//aktivieren
+	TIM12->CCER |= 1;	//aktivieren
 	
 	//Interrupt aktivieren
-	TIM12->DIER |= TIM_DIER_CC1IE;
-	NVIC_DisableIRQ(TIM8_BRK_TIM12_IRQn);
+	TIM12->DIER |= 1<<1;
+	NVIC_SetPriority(TIM8_BRK_TIM12_IRQn, 4);
+	NVIC_EnableIRQ(TIM8_BRK_TIM12_IRQn);
 	
 	//Timer start
-	TIM12->CR1 |= TIM_CR1_CEN;
+	TIM12->CR1 |= 1;
 }
 
 void TIM8_BRK_TIM12_IRQHandler(void){
-	if (TIM12->SR & TIM_SR_CC1IF) {
-		uint32_t capture = TIM12->CCR1;
-		capture_diff = (capture - last_capture) & 0xFFFF;
-		last_capture = capture;
-
-		if (capture_diff != 0) {
-			frequency = 1000000 / capture_diff; // da 1µs Auflösung
-		}
-		TIM12->SR &= ~TIM_SR_CC1IF; // Flag löschen
-	}
+	z2 = TIM12->CCR1;		//Wert der in Capture ist
+	difference = z2-z1;					//Taktanzahl zwischen 2 Flanken
+	z1 = TIM12->CCR1;
 }
 
 int main(void){	
@@ -290,6 +266,7 @@ int main(void){
 	//Hauptschleife alle 50ms durchlaufen
 	while(1){
 		uint32_t ms_start = ms;
+		frequency = 84000000 / dt;
 		if((GPIOA->IDR&1) != 0){
 			tasterStatus = 1;
 			TIM4->CCR2 = 999;

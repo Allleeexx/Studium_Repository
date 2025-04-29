@@ -17,6 +17,8 @@ int display_on = 0;
 int last_button_state = 0;
 int backgroundOffTimer = 10*1000;
 
+int dimmerAktiv = 0;
+
 //Ende Globale Variablen ------------------
 
 void delay_function(uint16_t time){
@@ -113,19 +115,17 @@ void TIM7_IRQHandler(void){
         }else{
 						GPIOD->ODR &= ~(1<<12);	//Ausschalten
 				}
+				backgroundOffTimer = 10000;
     }
 
-    // 10s Timer für das Ausschalten der Hintergrundbeleuchtung
-    if (tasterStatus == 0 && backgroundOffTimer > 0) {
-        backgroundOffTimer--;
-        if (backgroundOffTimer == 0) {
-            //LCD_ClearDisplay(0xFE00);  // Text auf Display löschen
-						for(int y=999; y>=99; y=y-1){
-							TIM4->CCR2 = y;
-						}
-						//GPIOD->ODR &= ~(1<<13);			//Pin aus alles aus die Maus
-        }
+		if (tasterStatus == 0 && backgroundOffTimer > 0) {
+			backgroundOffTimer--;
+		}
+				
+    if (backgroundOffTimer == 0) {
+			if( TIM4->CCR2 > 99 ) TIM4->CCR2 = TIM4->CCR2 - 1;
     }
+	
 	return;
 }
 
