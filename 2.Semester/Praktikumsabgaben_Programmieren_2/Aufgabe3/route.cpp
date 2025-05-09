@@ -45,19 +45,19 @@ float Route::distance() const{
         return error;
     }
 
-    float px1, px2, py1, py2, i, distance = 0;
+    float StartX, StartY, EndX, EndY, i, distance = 0;
     float AnzahlDestinations = destinations->size();
     float height = getHeight();
 
     while(i<AnzahlDestinations){
-        px2 = destinations->at(i).first;        //wenn punkt zum beispiel (1,0) dann ist hier px2 die 1 und py2 ist 0
-        py2 = destinations->at(i).second;
-        distance += dist(px1, py1, px2, py2, height);
-        px1 = px2;
-        py1 = py2;
+        EndX = destinations->at(i).first;        //wenn punkt zum beispiel (1,0) dann ist hier EndX die 1 und py2 ist 0
+        EndY = destinations->at(i).second;
+        distance += dist(StartX, StartY, EndX, EndY, height);
+        StartX = EndX;
+        StartY = EndY;
         i++;
     }
-    distance += dist(px1,py1, 0,0, height);
+    distance += dist(StartX,StartY, 0,0, height);
     return distance;
 }           
 
