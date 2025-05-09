@@ -1,6 +1,7 @@
 #include "route.h"
 #include <algorithm>
-#include <limits>
+
+float error = 0.0;
 
 Route::Route(const float pHeight, function<float(float, float, float, float, float)> pDist){
     height = pHeight;
@@ -40,10 +41,46 @@ void Route::setDist(function<float(float, float, float, float, float)> pDist){
 }      
 
 float Route::distance() const{
-//function Dist verwenden
-//wenn zielliste leer ist soll 0,0 rauskommen
+    if(destinations->empty()){          //wenn destinations leer ist return error
+        return error;
+    }
+
+    float px1, px2, py1, py2, i, distance = 0;
+    float AnzahlDestinations = destinations->size();
+    float height = getHeight();
+
+    while(i<AnzahlDestinations){
+        px2 = destinations->at(i).first;        //wenn punkt zum beispiel (1,0) dann ist hier px2 die 1 und py2 ist 0
+        py2 = destinations->at(i).second;
+        distance += dist(px1, py1, px2, py2, height);
+        px1 = px2;
+        py1 = py2;
+        i++;
+    }
+    distance += dist(px1,py1, 0,0, height);
+    return distance;
 }           
 
-Route Route::shortestRoute() const{
+Route Route::shortestRoute() const {
+    Route workingcopy = Route(*this);
 
+    // Prüfen, ob es überhaupt Destinationen gibt
+    if (workingcopy.destinations->empty()) {
+        return workingcopy; 
+    }
+
+    sort(workingcopy.destinations->begin(), workingcopy.destinations->end());
+
+    float shortestDistance = workingcopy.distance();
+    Route bestRoute = workingcopy;
+
+    while (next_permutation(workingcopy.destinations->begin(), workingcopy.destinations->end())) {
+        float currentDistance = workingcopy.distance();
+        if (currentDistance < shortestDistance) {
+            shortestDistance = currentDistance;
+            bestRoute = workingcopy;
+        }
+    }
+
+    return bestRoute;
 }

@@ -14,9 +14,6 @@ Ballistic::Ballistic(const string& pId, const float pTakeOffAngle, const float p
     }else{  //Hier die Default-Werte
         takeOffAngle = 45.0;
     }
-
-    
-
 }
 
 Ballistic::~Ballistic(){}
