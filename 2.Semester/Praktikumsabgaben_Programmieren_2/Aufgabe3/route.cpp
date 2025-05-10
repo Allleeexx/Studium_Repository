@@ -45,7 +45,12 @@ float Route::distance() const{
         return error;
     }
 
-    float StartX, StartY, EndX, EndY, i, distance = 0;
+    float StartX = 0.0;
+    float StartY = 0.0;
+    float EndX = 0.0;
+    float EndY = 0.0;
+    int i = 0;
+    float distance = 0.0;  //Alles in einer Zeile gibt warum auch immer einen fehler deswegen nochmal einzeln
     float AnzahlDestinations = destinations->size();
     float height = getHeight();
 
@@ -70,17 +75,17 @@ Route Route::shortestRoute() const {
     }
 
     sort(workingcopy.destinations->begin(), workingcopy.destinations->end());
-
     float shortestDistance = workingcopy.distance();
-    Route bestRoute = workingcopy;
+    Route bestRoute = Route(*this);
 
     while (next_permutation(workingcopy.destinations->begin(), workingcopy.destinations->end())) {
         float currentDistance = workingcopy.distance();
         if (currentDistance < shortestDistance) {
             shortestDistance = currentDistance;
-            bestRoute = workingcopy;
+            bestRoute.setHeight(workingcopy.getHeight());
+            bestRoute.setDist(workingcopy.dist);
+            *bestRoute.destinations = *workingcopy.destinations;
         }
     }
-
     return bestRoute;
 }
