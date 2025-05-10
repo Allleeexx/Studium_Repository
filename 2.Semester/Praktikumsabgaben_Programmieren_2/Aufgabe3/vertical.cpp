@@ -18,5 +18,5 @@ Vertical::~Vertical(){}
  }
 
   float Vertical::distance(const float x1, const float y1, const float x2, const float y2, const float h){   
-   return 2+sqrt(h*h)+sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));        //2 + vertikakler Abstand + horizontaler Abstand          --> vertikaler Abstand ist der Betrag der höhe quadrat      --> horizontaler Abstand ist die Distanz zwischen den einzelnen Punkten
+   return 2*sqrt(h*h)+sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));        //2 + vertikakler Abstand + horizontaler Abstand          --> vertikaler Abstand ist der Betrag der höhe quadrat      --> horizontaler Abstand ist die Distanz zwischen den einzelnen Punkten
  }
