@@ -13,7 +13,7 @@ int main(){
     //Vertical vert("1");
     Vertical* vert = new Vertical("1");
     //Ballistic ball("1", 20.0, 20.0);
-    Ballistic* ball = new Ballistic("1", 20.0, 20.0);
+    Ballistic* ball = new Ballistic("1", 30.0, 60.0);
     
     vector<Ufo*> ufos {vert, ball};
 
@@ -35,7 +35,7 @@ int main(){
     case 1:
         // fly from (0.0, 0.0, 0.0) to (5.0, -1.5, 0.0)
         // at altitude 4.0 with 10 km/h
-        ufos[1]->flyToDest(5.0, -1.5, 4.0, 10);
+        ufos[1]->flyToDest(-15.0, 1.5, 8.0, 10);
 
         // fly from (5.0, -1.5, 0.0) to (-3.0, 0.0, 0.0)
         // at altitude 8.0 with 5 km/h
