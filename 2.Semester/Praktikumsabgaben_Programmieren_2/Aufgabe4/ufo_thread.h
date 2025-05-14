@@ -5,20 +5,22 @@
 #include <vector>
 #include <functional>
 #include <utility>
+#include <thread>
+
 
 #include "ufo.h"
 using namespace std; 
 
 class UfoThread : public Ufo{
     private:
-        thread* flyThread;
+        thread* flyThread;      //Attribut flyThread ist pointer auf einen Thread
         Ufo* ufo;
         bool isFlying;      //soll standardmäßig false sein. nur true wenn fliegt
+        void runner(const float x, const float y, const float height, const int speed);
 
     public:
         UfoThread(Ufo* pUfo);
         ~UfoThread();
-        void runner(const float x, const float y, const float height, const int speed);
         void startUfo(const float x, const float y, const float height, const int speed);
         bool getIsFlying();
 };
