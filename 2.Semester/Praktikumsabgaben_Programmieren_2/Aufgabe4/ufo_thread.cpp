@@ -1,10 +1,11 @@
 #include "ufo_thread.h"
 
-UfoThread:: UfoThread(Ufo* pUfo) : ufo(pUfo), isFlying(false), flyThread(nullptr){
-    //flyThread = nullptr;        //mit flythread != nullptr prüfen ob ein Thread existiert
+
+UfoThread::UfoThread(Ufo* pUfo){
+    ufo = pUfo;
 }
 
-UfoThread:: ~UfoThread(){
+UfoThread::~UfoThread(){
 
 }
 
@@ -15,14 +16,12 @@ void UfoThread::runner(const float x, const float y, const float height, const i
 }
 
 void UfoThread::startUfo(const float x, const float y, const float height, const int speed){        //startet den Thread. Parameter von startUfo an runner übergeben
-    if(flyThread != nullptr){
-        flyThread->join();
-        
+    if(flyThread != nullptr){   //Wenn thread existiert Thread schließen
+        flyThread->join();  //thread schließen    
         delete flyThread;
-        runner(x, y, height, speed);
+    }else{
+        flyThread = new thread(&UfoThread::runner, this, x, y, height, speed);  //startet den Thread und ruft funktion runner auf
     }
-
-    //flythread noch zuweisen
 }
 
 bool UfoThread::getIsFlying(){

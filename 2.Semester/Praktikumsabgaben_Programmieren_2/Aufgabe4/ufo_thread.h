@@ -11,10 +11,10 @@
 #include "ufo.h"
 using namespace std; 
 
-class UfoThread : public Ufo{
+class UfoThread{
     private:
         thread* flyThread;      //Attribut flyThread ist pointer auf einen Thread
-        Ufo* ufo;
+        Ufo* ufo;           //Pointer auf ein Objekt von Ballistic oder Vertical
         bool isFlying;      //soll standardmäßig false sein. nur true wenn fliegt
         void runner(const float x, const float y, const float height, const int speed);
 
