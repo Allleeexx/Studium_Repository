@@ -8,8 +8,10 @@ UfoThread::UfoThread(Ufo* pUfo){
 }
 
 UfoThread::~UfoThread(){
-    flyThread->join();
-    delete flyThread;
+    if(flyThread != nullptr){
+        flyThread->join();
+        delete flyThread;
+    }
 }
 
 void UfoThread::runner(const float x, const float y, const float height, const int speed){      //das hier ist die Thread Funktion. Fliegt das Ufo nach (x,y,0.0)
@@ -22,7 +24,7 @@ void UfoThread::startUfo(const float x, const float y, const float height, const
         flyThread->join();  //thread schließen    
         delete flyThread;
     }
-    
+
     isFlying = true;
     flyThread = new thread(&UfoThread::runner, this, x, y, height, speed);  //startet den Thread und ruft funktion runner auf
     
