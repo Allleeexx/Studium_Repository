@@ -68,5 +68,11 @@ int main(){
 
 		pthread_create(&threads[i], NULL, threadFunction, &bereiche[i]);
 	}	
+
+
+	//Hier der Bereich um ergebnisse zu printen
+	for(int i=0; i<THREAD_COUNT; i++){
+		printf("Bereich %d: \nStartwert: %d\nEndwert: %d\nMaxIterations: %d\nMaxStartValue: %d\n", i, bereiche[i].start, bereiche[i].end, bereiche[i].maxIterations, bereiche[i].maxStartValue);
+	}
 	return 0;
 }
