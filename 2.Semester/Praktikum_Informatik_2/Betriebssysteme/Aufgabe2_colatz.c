@@ -3,8 +3,9 @@
 #include <string.h>
 
 
-#define RANGE_START 1;
-#define RANGE_END 100000000;
+#define RANGE_START 1
+#define RANGE_END 100000000
+#define THREAD_COUNT 5
 
 typedef struct{
 	char name [100];
@@ -33,10 +34,39 @@ int collatzfunction(int x){
 	return cnt;
 }
 
+void* threadFunction(void * arg){
+	Rechner* r = (Rechner*) arg;
+
+	int maxIterations = 0;
+	int maxStartValue = 0;
+
+	for(int i=r->start ; i<=r->end; i++){
+		int iterations = collatzfunction(i);
+		if(iterations > maxIterations){
+			maxIterations = iterations;
+			maxStartValue = i;
+		}
+	}
+
+	r->maxIterations = maxIterations;
+	r->maxStartValue = maxStartValue;
+
+	pthread_exit(NULL);
+}
+
 int main(){
 	
-	int ergebnis = collatzfunction(100000);
-	printf("Ergebnis: %d\n", ergebnis);
+	pthread_t threads[THREAD_COUNT];
+	Rechner bereiche[THREAD_COUNT];
 
+
+	int block_size = RANGE_END / THREAD_COUNT;
+	
+	for(int i=0; i<THREAD_COUNT; i++){
+		bereiche[i].start = i*block_size +1;
+		bereiche[i].end = (i+1) * block_size;
+
+		pthread_create(&threads[i], NULL, threadFunction, &bereiche[i]);
+	}	
 	return 0;
 }
