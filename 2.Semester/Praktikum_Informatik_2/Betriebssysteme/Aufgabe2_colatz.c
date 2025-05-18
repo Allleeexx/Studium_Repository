@@ -73,6 +73,11 @@ int main(){
 		pthread_create(&threads[i], NULL, threadFunction, &bereiche[i]);
 	}	
 
+	//Alle Threads schließen, ansosnten irgnedwelche Werte
+	for(int i=0; i<THREAD_COUNT; i++){
+		pthread_join(threads[i], NULL);
+	}
+
 
 	//Hier der Bereich um ergebnisse zu printen
 	for(int i=0; i<THREAD_COUNT; i++){
