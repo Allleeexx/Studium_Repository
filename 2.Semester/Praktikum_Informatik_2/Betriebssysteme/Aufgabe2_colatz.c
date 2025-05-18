@@ -19,39 +19,24 @@ typedef struct{
 }Rechner;
 
 
-void *example_fct(void *args){
-	Student *student = (Student*) args;
-	student->length = strlen(student->name);
-	printf("Name in example: %s\n", student->name);
-	printf("Length von Name: %d\n\n", student->length);
-	return NULL;
-}
 
-int collatzfunction(int input){
+int collatzfunction(int x){
 	int cnt = 0;
-	whiel(x>1){
-		x = (x%2==0)? x/2:3*x+1;
-		cnt++;
+	while(x>1){
+		if(x % 2 == 0){
+			x = x/2;
+		}else{
+			x = 3*x+1;
+		}
+		cnt = cnt + 1;
 	}
 	return cnt;
 }
 
 int main(){
-	Student student;
-	Rechner rechner;
-
 	
-	strncpy(student.name, "Alex", 100);
-	pthread_t threadA/*, threadB*/;
+	int ergebnis = collatzfunction(100000);
+	printf("Ergebnis: %d\n", ergebnis);
 
-
-	//Hier im Bereich Thread Funktion aufrufen
-	pthread_create(&threadA, NULL, &example_fct, &student);
-	pthread_create(&threadA, NULL, &collatzfunction, &rechner);	
-
-	//In dem Bereich Thread schließen
-	pthread_join(threadA, NULL);
-
-
-	//////////////////////////////////////////////////////
+	return 0;
 }
