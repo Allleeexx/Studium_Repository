@@ -19,6 +19,10 @@ typedef struct{
 	int maxIterations;
 }Rechner;
 
+typedef struct {
+ 	time_t tv_sec; /* Sekunden */
+ 	long tv_nsec; /* Nanosekunden */
+}timespec;
 
 
 int collatzfunction(int x){
@@ -73,6 +77,7 @@ int main(){
 	//Hier der Bereich um ergebnisse zu printen
 	for(int i=0; i<THREAD_COUNT; i++){
 		printf("Bereich %d: \nStartwert: %d\nEndwert: %d\nMaxIterations: %d\nMaxStartValue: %d\n", i, bereiche[i].start, bereiche[i].end, bereiche[i].maxIterations, bereiche[i].maxStartValue);
+		printf("\n\n");
 	}
 	return 0;
 }
