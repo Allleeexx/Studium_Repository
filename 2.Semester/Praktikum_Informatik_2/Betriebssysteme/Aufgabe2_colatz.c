@@ -7,10 +7,6 @@
 #define RANGE_END 100000000
 #define THREAD_COUNT 16
 
-typedef struct{
-	char name [100];
-	int length;	
-}Student;
 
 typedef struct{
 	int start;
@@ -25,7 +21,7 @@ typedef struct {
 }timespec;
 
 
-int collatzfunction(int x){
+int collatzfunction(unsigned long long x){
 	int cnt = 0;
 	while(x>1){
 		if(x % 2 == 0){
@@ -45,7 +41,7 @@ void* threadFunction(void * arg){
 	int maxStartValue = 0;
 
 	for(int i=r->start ; i<=r->end; i++){
-		int iterations = collatzfunction(i);
+		int iterations = collatzfunction((unsigned long long)i);
 		if(iterations > maxIterations){
 			maxIterations = iterations;
 			maxStartValue = i;
@@ -90,6 +86,20 @@ int main(){
 		printf("Bereich %d: \nStartwert: %d\nEndwert: %d\nMaxIterations: %d\nMaxStartValue: %d\n", i, bereiche[i].start, bereiche[i].end, bereiche[i].maxIterations, bereiche[i].maxStartValue);
 		printf("\n\n");
 	}
+
+	// Globales Maximum finden
+	int globalMaxIterations = 0;
+	int globalMaxStartValue = 0;
+
+	for(int i = 0; i < THREAD_COUNT; i++){
+		if(bereiche[i].maxIterations > globalMaxIterations){
+			globalMaxIterations = bereiche[i].maxIterations;
+			globalMaxStartValue = bereiche[i].maxStartValue;
+		}
+	}
+
+	printf("Längste Collatz-Folge im Bereich [%d - %d]:\nStartwert: %d\nAnzahl Schritte: %d\n", RANGE_START, RANGE_END, globalMaxStartValue, globalMaxIterations);
+
 
 	double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
 	printf("Bearbeitungszeit: %.6f Sekunden\n", elapsed);
