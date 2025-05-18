@@ -5,7 +5,7 @@
 
 #define RANGE_START 1
 #define RANGE_END 100000000
-#define THREAD_COUNT 5
+#define THREAD_COUNT 16
 
 typedef struct{
 	char name [100];
