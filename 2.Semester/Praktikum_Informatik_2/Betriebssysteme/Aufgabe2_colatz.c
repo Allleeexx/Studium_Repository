@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <string.h>
-
+#include <time.h>
 
 #define RANGE_START 1
 #define RANGE_END 100000000
@@ -66,6 +66,10 @@ int main(){
 
 	int block_size = RANGE_END / THREAD_COUNT;
 	
+	struct timespec start, end;
+	clock_gettime(CLOCK_MONOTONIC, &start);
+
+
 	for(int i=0; i<THREAD_COUNT; i++){
 		bereiche[i].start = i*block_size +1;
 		bereiche[i].end = (i+1) * block_size;
@@ -78,11 +82,17 @@ int main(){
 		pthread_join(threads[i], NULL);
 	}
 
+	clock_gettime(CLOCK_MONOTONIC, &end);
+
 
 	//Hier der Bereich um ergebnisse zu printen
 	for(int i=0; i<THREAD_COUNT; i++){
 		printf("Bereich %d: \nStartwert: %d\nEndwert: %d\nMaxIterations: %d\nMaxStartValue: %d\n", i, bereiche[i].start, bereiche[i].end, bereiche[i].maxIterations, bereiche[i].maxStartValue);
 		printf("\n\n");
 	}
+
+	double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+	printf("Bearbeitungszeit: %.6f Sekunden\n", elapsed);
+
 	return 0;
 }
