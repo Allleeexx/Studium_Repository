@@ -58,7 +58,8 @@ void* threadFunction(void * arg){
 
 	clock_gettime(CLOCK_MONOTONIC, &r->end_time);  // Endzeit
 
-	r->totalRuntime = (r->start_time.tv_sec - r->start_time.tv_sec) + (r->end_time.tv_nsec - r->end_time.tv_nsec) / 1e9;
+	r->totalRuntime = (r->end_time.tv_sec - r->start_time.tv_sec) + (r->end_time.tv_nsec - r->start_time.tv_nsec) / 1e9;
+
 
 	pthread_exit(NULL);
 }
