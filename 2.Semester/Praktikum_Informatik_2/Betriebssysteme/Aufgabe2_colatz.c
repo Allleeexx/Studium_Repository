@@ -15,7 +15,7 @@ typedef struct{
 	int maxIterations;
 	struct timespec start_time;
 	struct timespec end_time;
-	double totalRuntime;
+	float totalRuntime;
 }Rechner;
 
 typedef struct {
@@ -92,7 +92,7 @@ int main(){
 
 	//Hier der Bereich um ergebnisse zu printen
 	for(int i=0; i<THREAD_COUNT; i++){
-		printf("Bereich %d: \nStartwert: %d\nEndwert: %d\nMaxIterations: %d\nMaxStartValue: %d\nThreadLaufzeit: %f Sekunden", i, bereiche[i].start, bereiche[i].end, bereiche[i].maxIterations, bereiche[i].maxStartValue, bereiche[i].totalRuntime);
+		printf("Bereich %d: \nStartwert: %d\nEndwert: %d\nMaxIterations: %d\nMaxStartValue: %d\nThreadLaufzeit: %lf Sekunden", i, bereiche[i].start, bereiche[i].end, bereiche[i].maxIterations, bereiche[i].maxStartValue, bereiche[i].totalRuntime);
 		printf("\n\n");
 	}
 
