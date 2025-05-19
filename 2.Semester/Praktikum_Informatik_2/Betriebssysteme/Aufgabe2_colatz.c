@@ -13,6 +13,9 @@ typedef struct{
 	int end;
 	int maxStartValue;
 	int maxIterations;
+	struct timespec start_time;
+	struct timespec end_time;
+	double totalRuntime;
 }Rechner;
 
 typedef struct {
@@ -37,6 +40,8 @@ int collatzfunction(unsigned long long x){
 void* threadFunction(void * arg){
 	Rechner* r = (Rechner*) arg;
 
+	clock_gettime(CLOCK_MONOTONIC, &r->start_time);  // Startzeit
+
 	int maxIterations = 0;
 	int maxStartValue = 0;
 
@@ -50,6 +55,10 @@ void* threadFunction(void * arg){
 
 	r->maxIterations = maxIterations;
 	r->maxStartValue = maxStartValue;
+
+	clock_gettime(CLOCK_MONOTONIC, &r->end_time);  // Endzeit
+
+	r->totalRuntime = (r->start_time.tv_sec - r->start_time.tv_sec) + (r->end_time.tv_nsec - r->end_time.tv_nsec) / 1e9;
 
 	pthread_exit(NULL);
 }
@@ -83,7 +92,7 @@ int main(){
 
 	//Hier der Bereich um ergebnisse zu printen
 	for(int i=0; i<THREAD_COUNT; i++){
-		printf("Bereich %d: \nStartwert: %d\nEndwert: %d\nMaxIterations: %d\nMaxStartValue: %d\n", i, bereiche[i].start, bereiche[i].end, bereiche[i].maxIterations, bereiche[i].maxStartValue);
+		printf("Bereich %d: \nStartwert: %d\nEndwert: %d\nMaxIterations: %d\nMaxStartValue: %d\nThreadLaufzeit: %.6f Sekunden", i, bereiche[i].start, bereiche[i].end, bereiche[i].maxIterations, bereiche[i].maxStartValue, bereiche[i].totalRuntime);
 		printf("\n\n");
 	}
 
