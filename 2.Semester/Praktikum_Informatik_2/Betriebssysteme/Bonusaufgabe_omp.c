@@ -1,3 +1,5 @@
+//Um omp zu compilieren mit gcc -fopenmp -o Name Name.c
+
 #include <stdio.h>
 #include <time.h>
 #include <omp.h>
