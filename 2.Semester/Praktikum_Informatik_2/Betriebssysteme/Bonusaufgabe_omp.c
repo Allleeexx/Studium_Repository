@@ -6,7 +6,7 @@
 
 #define RANGE_START 1
 #define RANGE_END 100000000
-#define THREAD_COUNT omp_get_max_threads()
+
 
 
 typedef struct{
@@ -60,23 +60,20 @@ void threadFunction(void * arg){
 	clock_gettime(CLOCK_MONOTONIC, &r->end_time);  // Endzeit
 
 	r->totalRuntime = (r->end_time.tv_sec - r->start_time.tv_sec) + (r->end_time.tv_nsec - r->start_time.tv_nsec) / 1e9;
-
-
-	pthread_exit(NULL);
 }
 
 int main(){
-	Rechner bereiche[THREAD_COUNT];
+	int thread_count =  omp_get_max_threads();
+	Rechner bereiche[thread_count];
 
 
-	int block_size = RANGE_END / THREAD_COUNT;
+	int block_size = RANGE_END / thread_count;
 	
 	struct timespec start, end;
 	clock_gettime(CLOCK_MONOTONIC, &start);
 
 	#pragma omp parallel for
-	{
-		int tID = omp_get_thread_num();
+	for(int tID = 0; tID < thread_count; tID++){
 		bereiche[tID].start = tID*block_size +1;
 		bereiche[tID].end = (tID+1) * block_size;
 		threadFunction(&bereiche[tID]);
