@@ -82,6 +82,7 @@ int main(){
 		#pragma omp critical
 		{
 			printf("Bereich %d: \nStartwert: %d\nEndwert: %d\nMaxIterations: %d\nMaxStartValue: %d\nThreadLaufzeit: %lf Sekunden", tID, bereiche[tID].start, bereiche[tID].end, bereiche[tID].maxIterations, bereiche[tID].maxStartValue, bereiche[tID].totalRuntime);			
+			printf("\n\n");
 		}
 	}
 
