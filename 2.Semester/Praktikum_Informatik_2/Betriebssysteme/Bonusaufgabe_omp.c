@@ -1,12 +1,12 @@
 #include <stdio.h>
-#include <pthread.h>
-#include <string.h>
 #include <time.h>
 #include <omp.h>
+#include <pthread.h>
+
 
 #define RANGE_START 1
 #define RANGE_END 100000000
-#define THREAD_COUNT 16
+#define THREAD_COUNT omp_get_max_threads()
 
 
 typedef struct{
@@ -38,7 +38,7 @@ int collatzfunction(unsigned long long x){
 	return cnt;
 }
 
-void* threadFunction(void * arg){
+void threadFunction(void * arg){
 	Rechner* r = (Rechner*) arg;
 
 	clock_gettime(CLOCK_MONOTONIC, &r->start_time);  // Startzeit
@@ -66,8 +66,6 @@ void* threadFunction(void * arg){
 }
 
 int main(){
-	
-	pthread_t threads[THREAD_COUNT];
 	Rechner bereiche[THREAD_COUNT];
 
 
@@ -76,28 +74,22 @@ int main(){
 	struct timespec start, end;
 	clock_gettime(CLOCK_MONOTONIC, &start);
 
-
-	#pragma omp parallel for{
-//	for(int i=0; i<THREAD_COUNT; i++){
-		bereiche[i].start = i*block_size +1;
-		bereiche[i].end = (i+1) * block_size;
-
-		pthread_create(&threads[i], NULL, threadFunction, &bereiche[i]);
-	}	
-
-	//Alle Threads schließen, ansosnten irgnedwelche Werte
-	for(int i=0; i<THREAD_COUNT; i++){
-		pthread_join(threads[i], NULL);
+	#pragma omp parallel for
+	{
+		int tID = omp_get_thread_num();
+		bereiche[tID].start = tID*block_size +1;
+		bereiche[tID].end = (tID+1) * block_size;
+		threadFunction(&bereiche[tID]);
 	}
 
 	clock_gettime(CLOCK_MONOTONIC, &end);
 
 
 	//Hier der Bereich um ergebnisse zu printen
-	#pragma omp critical
-	//for(int i=0; i<THREAD_COUNT; i++){
+	#pragma omp critical 
 	{
-		printf("Bereich %d: \nStartwert: %d\nEndwert: %d\nMaxIterations: %d\nMaxStartValue: %d\nThreadLaufzeit: %lf Sekunden", i, bereiche[i].start, bereiche[i].end, bereiche[i].maxIterations, bereiche[i].maxStartValue, bereiche[i].totalRuntime);
+		int tID = omp_get_thread_num();
+		printf("Bereich %d: \nStartwert: %d\nEndwert: %d\nMaxIterations: %d\nMaxStartValue: %d\nThreadLaufzeit: %lf Sekunden", tID, bereiche[tID].start, bereiche[tID].end, bereiche[tID].maxIterations, bereiche[tID].maxStartValue, bereiche[tID].totalRuntime);
 		printf("\n\n");
 	}
 
@@ -105,12 +97,15 @@ int main(){
 	int globalMaxIterations = 0;
 	int globalMaxStartValue = 0;
 
-	for(int i = 0; i < THREAD_COUNT; i++){
-		if(bereiche[i].maxIterations > globalMaxIterations){
-			globalMaxIterations = bereiche[i].maxIterations;
-			globalMaxStartValue = bereiche[i].maxStartValue;
+	#pragma omp critical
+	{
+		int tID = omp_get_thread_num();
+		if(bereiche[tID].maxIterations > globalMaxIterations){
+			globalMaxIterations = bereiche[tID].maxIterations;
+			globalMaxStartValue = bereiche[tID].maxStartValue;
 		}
 	}
+
 
 	printf("Längste Collatz-Folge im Bereich [%d - %d]:\nStartwert: %d\nAnzahl Schritte: %d\n", RANGE_START, RANGE_END, globalMaxStartValue, globalMaxIterations);
 
