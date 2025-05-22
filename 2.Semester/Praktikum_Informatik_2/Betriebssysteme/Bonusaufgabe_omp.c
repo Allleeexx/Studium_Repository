@@ -77,18 +77,18 @@ int main(){
 		bereiche[tID].start = tID*block_size +1;
 		bereiche[tID].end = (tID+1) * block_size;
 		threadFunction(&bereiche[tID]);
+
+		//Hier der Bereich um ergebnisse zu printen
+		#pragma omp critical
+		{
+			printf("Bereich %d: \nStartwert: %d\nEndwert: %d\nMaxIterations: %d\nMaxStartValue: %d\nThreadLaufzeit: %lf Sekunden", tID, bereiche[tID].start, bereiche[tID].end, bereiche[tID].maxIterations, bereiche[tID].maxStartValue, bereiche[tID].totalRuntime);			
+		}
 	}
 
 	clock_gettime(CLOCK_MONOTONIC, &end);
 
 
-	//Hier der Bereich um ergebnisse zu printen
-	#pragma omp critical 
-	{
-		int tID = omp_get_thread_num();
-		printf("Bereich %d: \nStartwert: %d\nEndwert: %d\nMaxIterations: %d\nMaxStartValue: %d\nThreadLaufzeit: %lf Sekunden", tID, bereiche[tID].start, bereiche[tID].end, bereiche[tID].maxIterations, bereiche[tID].maxStartValue, bereiche[tID].totalRuntime);
-		printf("\n\n");
-	}
+
 
 	// Globales Maximum finden
 	int globalMaxIterations = 0;
