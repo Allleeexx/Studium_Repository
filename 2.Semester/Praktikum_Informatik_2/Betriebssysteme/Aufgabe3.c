@@ -20,6 +20,7 @@ typedef struct {
 pthread_mutex_t mutex;
 int globalMaxIterations = 0;
 int globalMaxStartValue = 0;
+long long int totalSumm = 0;
 
 int collatzfunction(unsigned long long x){
 	int cnt = 0;
@@ -48,6 +49,7 @@ void* threadFunction(void* arg){
 			localMaxIterations = iterations;
 			localMaxStartValue = i;
 		}
+		totalSumm += iterations;
 	}
 
 	r->maxIterations = localMaxIterations;
@@ -98,8 +100,7 @@ int main(){
 			i, bereiche[i].start, bereiche[i].end, bereiche[i].maxIterations, bereiche[i].maxStartValue, bereiche[i].totalRuntime);
 	}
 
-	printf("Längste Collatz-Folge im Bereich [%d - %d]:\nStartwert: %d\nAnzahl Schritte: %d\n",
-		RANGE_START, RANGE_END, globalMaxStartValue, globalMaxIterations);
+	printf("Längste Collatz-Folge im Bereich [%d - %d]:\nStartwert: %d\nAnzahl Schritte: %d\n\n\n Gesamtsumme: %d", RANGE_START, RANGE_END, globalMaxStartValue, globalMaxIterations, totalSumm);
 
 	double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
 	printf("Gesamtlaufzeit: %.6f Sekunden\n", elapsed);
