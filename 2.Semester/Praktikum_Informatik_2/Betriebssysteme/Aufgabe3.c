@@ -49,7 +49,10 @@ void* threadFunction(void* arg){
 			localMaxIterations = iterations;
 			localMaxStartValue = i;
 		}
+		//vllt davor und danach locken und unlocken
+		pthread_mutex_lock(&mutex);
 		totalSumm += iterations;
+		pthread_mutex_unlock(&mutex);
 	}
 
 	r->maxIterations = localMaxIterations;
