@@ -4,6 +4,7 @@
 #include <time.h>
 #include <stdatomic.h>
 #include <semaphore.h>
+#include <stdlib.h>
 
 #define PRODUCE_COUNT 10
 #define NUM_PRODUCERS 2
@@ -144,6 +145,6 @@ int main(){
     sem_destroy(&sem_mutex);
 
     printf("Alle Threads beendet. Programm fertig.\n");
-	
+
 	return 0;
 }
