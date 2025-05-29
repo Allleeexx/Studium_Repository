@@ -2,95 +2,95 @@
 #include <pthread.h>
 #include <string.h>
 #include <time.h>
-#include <stdatomic.h>
-#include <semaphore.h>
+#include <unistd.h>
 #include <stdlib.h>
+#include <semaphore.h>
 
 #define PRODUCE_COUNT 10
 #define NUM_PRODUCERS 2
 #define NUM_CONSUMERS 2
 
-
-//------------------Structs-----------------------//
-
-typedef struct node{
-	struct node* next;
-	int value;
-}Node;
-
-//------------------Global Vars-----------------------//
+typedef struct node {
+    struct node* next;
+    int value;
+} Node;
 
 Node* head = NULL;
 sem_t sem_items;
-sem_t sem_slots;
 sem_t sem_mutex;
 int active_producers = NUM_PRODUCERS;
 
-//------------------Functions-----------------------//
-
-int get_random(){
-	return rand() % 100+1;
+// Collatz-Funktion (Dummy-Arbeit)
+void collatz(int n) {
+    while (n != 1) {
+        if (n % 2 == 0)
+            n = n / 2;
+        else
+            n = 3 * n + 1;
+    }
 }
 
-void add_to_list(int value){
-	Node* new_node = (Node*)malloc(sizeof(Node));
-	new_node->value = value;
-	new_node->next = head;
-	head = new_node;
+int get_random() {
+    return rand() % 100 + 1;
 }
 
-int remove_from_list(){
-	if(head == NULL){
-		return -1;
-	}
-
-	Node* current = head;
-	Node* previous = NULL;
-
-	while(current->next != NULL){
-		previous = current;
-		current = current->next;
-	}
-
-	int value = current->value;
-
-	if(previous == NULL){
-		head = NULL;
-	}else{
-		previous->next = NULL;
-	}
-
-	free(current);
-	return value;
+void add_to_list(int value) {
+    Node* new_node = (Node*)malloc(sizeof(Node));
+    new_node->value = value;
+    new_node->next = head;
+    head = new_node;
 }
 
+int remove_from_list() {
+    if (head == NULL) {
+        return -1;
+    }
 
-//Producer Thread
-void* producer(void* arg){
-	unsigned int seed = (unsigned int)pthread_self();
-	srand(seed);
+    Node* current = head;
+    Node* previous = NULL;
 
-	for(int i=0; i<PRODUCE_COUNT; i++){
-		int value = get_random();
-		sleep(rand()%2);
+    while (current->next != NULL) {
+        previous = current;
+        current = current->next;
+    }
 
-		sem_wait(&sem_mutex);
-		add_to_list(value);
-		sem_post(&sem_mutex);
-		sem_post(&sem_items);
-		printf("[Producer %lu] Produziert: %d\n", pthread_self(), value);
-	}
+    int value = current->value;
 
-	sem_wait(&sem_mutex);
-	active_producers--;
-	sem_post(&sem_mutex);
+    if (previous == NULL) {
+        head = NULL;
+    } else {
+        previous->next = NULL;
+    }
 
-	pthread_exit(NULL);
+    free(current);
+    return value;
 }
 
-//Consumer Thread
-void* consumer(void* arg){
-	unsigned int seed = (unsigned int)pthread_self();
+void* producer(void* arg) {
+    unsigned int seed = (unsigned int)pthread_self();
+    srand(seed);
+
+    for (int i = 0; i < PRODUCE_COUNT; i++) {
+        int value = get_random();
+        sleep(rand() % 2);
+
+        sem_wait(&sem_mutex);
+        add_to_list(value);
+        sem_post(&sem_mutex);
+        sem_post(&sem_items);
+
+        printf("[Producer %lu] Produziert: %d\n", pthread_self(), value);
+    }
+
+    sem_wait(&sem_mutex);
+    active_producers--;
+    sem_post(&sem_mutex);
+
+    pthread_exit(NULL);
+}
+
+void* consumer(void* arg) {
+    unsigned int seed = (unsigned int)pthread_self();
     srand(seed);
 
     while (1) {
@@ -119,32 +119,36 @@ void* consumer(void* arg){
     pthread_exit(NULL);
 }
 
-int main(){
-	pthread_t producers[NUM_PRODUCERS];
+int main() {
+    pthread_t producers[NUM_PRODUCERS];
     pthread_t consumers[NUM_CONSUMERS];
 
     sem_init(&sem_items, 0, 0);
     sem_init(&sem_mutex, 0, 1);
 
-    // Threads erzeugen
     for (int i = 0; i < NUM_PRODUCERS; ++i)
         pthread_create(&producers[i], NULL, producer, NULL);
 
     for (int i = 0; i < NUM_CONSUMERS; ++i)
         pthread_create(&consumers[i], NULL, consumer, NULL);
 
-    // Auf Threads warten
     for (int i = 0; i < NUM_PRODUCERS; ++i)
         pthread_join(producers[i], NULL);
 
     for (int i = 0; i < NUM_CONSUMERS; ++i)
         pthread_join(consumers[i], NULL);
 
-    // Aufräumen
     sem_destroy(&sem_items);
     sem_destroy(&sem_mutex);
 
+    // Aufräumen der Liste
+    while (head != NULL) {
+        Node* temp = head;
+        head = head->next;
+        free(temp);
+    }
+
     printf("Alle Threads beendet. Programm fertig.\n");
 
-	return 0;
+    return 0;
 }
