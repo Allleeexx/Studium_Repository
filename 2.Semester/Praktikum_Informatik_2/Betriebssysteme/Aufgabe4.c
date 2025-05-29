@@ -29,7 +29,7 @@ int active_producers = NUM_PRODUCERS;
 //------------------Functions-----------------------//
 
 int get_random(){
-	return ramd() % 100+1;
+	return rand() % 100+1;
 }
 
 void add_to_list(int value){
