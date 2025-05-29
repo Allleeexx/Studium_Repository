@@ -2,10 +2,13 @@
 #include <pthread.h>
 #include <string.h>
 #include <time.h>
+#include <stdatomic.h>
 
 #define RANGE_START 1
 #define RANGE_END 100000000
 #define THREAD_COUNT 16
+
+//------------------Structs-----------------------//
 
 typedef struct {
 	int start;
@@ -17,10 +20,16 @@ typedef struct {
 	float totalRuntime;
 } Rechner;
 
+//------------------Global Vars-----------------------//
+
+int globalCounter = 0;
 pthread_mutex_t mutex;
 int globalMaxIterations = 0;
 int globalMaxStartValue = 0;
 long long int totalSumm = 0;
+
+
+//------------------Functions-----------------------//
 
 int collatzfunction(unsigned long long x){
 	int cnt = 0;
@@ -49,10 +58,7 @@ void* threadFunction(void* arg){
 			localMaxIterations = iterations;
 			localMaxStartValue = i;
 		}
-		//vllt davor und danach locken und unlocken
-		pthread_mutex_lock(&mutex);
-		totalSumm += iterations;
-		pthread_mutex_unlock(&mutex);
+		atomic_fetch_add(&totalSumm, iterations);
 	}
 
 	r->maxIterations = localMaxIterations;

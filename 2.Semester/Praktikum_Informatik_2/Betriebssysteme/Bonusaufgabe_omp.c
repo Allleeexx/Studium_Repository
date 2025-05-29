@@ -9,7 +9,7 @@
 #define RANGE_START 1
 #define RANGE_END 100000000
 
-
+//------------------Structs-----------------------//
 
 typedef struct{
 	int start;
@@ -26,6 +26,14 @@ typedef struct {
  	long tv_nsec; /* Nanosekunden */
 }timespec;
 
+
+//------------------Global Vars-----------------------//
+
+int globalCounter = 0;
+
+
+
+//------------------Functions-----------------------//
 
 int collatzfunction(unsigned long long x){
 	int cnt = 0;
