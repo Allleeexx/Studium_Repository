@@ -7,10 +7,9 @@
 #include <semaphore.h>
 #include <stdatomic.h>
 
-
-#define PRODUCE_COUNT 10
-#define NUM_PRODUCERS 2
-#define NUM_CONSUMERS 2
+#define PRODUCE_COUNT 10000        //Jeder producer produziert so viele Werte mal 
+#define NUM_PRODUCERS 50         //anazahl an producern
+#define NUM_CONSUMERS 30         //anzahl consumer
 
 typedef struct node {
     struct node* next;
@@ -21,10 +20,8 @@ Node* head = NULL;
 sem_t sem_items;
 sem_t sem_mutex;
 int active_producers = NUM_PRODUCERS;
-int list_length = 0;
 atomic_int werte_producers = 0;
 atomic_int werte_consumers = 0;
-
 
 // Collatz-Funktion (Dummy-Arbeit)
 void collatz(int n) {
@@ -45,11 +42,6 @@ void add_to_list(int value) {
     new_node->value = value;
     new_node->next = head;
     head = new_node;
-
-    atomic_fetch_add(&list_length, 1);
-    if(atomic_load(&list_length) > 5){
-        printf("Fehler. Listlength über 5\n");
-    }
 }
 
 int remove_from_list() {
@@ -74,7 +66,6 @@ int remove_from_list() {
     }
 
     free(current);
-    atomic_fetch_sub(&list_length, 1);
     return value;
 }
 
@@ -84,11 +75,11 @@ void* producer(void* arg) {
 
     for (int i = 0; i < PRODUCE_COUNT; i++) {
         int value = get_random();
-        sleep(rand() % 2);
+        //sleep(rand() % 2);
 
         sem_wait(&sem_mutex);
         add_to_list(value);
-        atomic_fetch_and_add(&werte_producers, value);
+        atomic_fetch_add(&werte_producers, value);
         sem_post(&sem_mutex);
         sem_post(&sem_items);
 
@@ -112,7 +103,6 @@ void* consumer(void* arg) {
         sem_wait(&sem_mutex);
         if (head == NULL && active_producers == 0) {
             sem_post(&sem_mutex);
-            sem_post(&sem_items);  // Für andere Consumer
             break;
         }
 
@@ -121,12 +111,11 @@ void* consumer(void* arg) {
             sem_post(&sem_mutex);
 
             collatz(value);  // Simuliere Arbeit
-            atomic_fetch_and_add(&werte_consumers, value);
+            atomic_fetch_add(&werte_consumers, value);
             printf("[Consumer %lu] Verarbeitet: %d\n", pthread_self(), value);
-            sleep(rand() % 2);
+         //   sleep(rand() % 2);
         } else {
             sem_post(&sem_mutex);
-            sem_post(&sem_items);  // Für andere Consumer
         }
     }
 
@@ -149,6 +138,10 @@ int main() {
     for (int i = 0; i < NUM_PRODUCERS; ++i)
         pthread_join(producers[i], NULL);
 
+    // Signal an Consumer, dass keine neuen Items mehr kommen
+    for (int i = 0; i < NUM_CONSUMERS; i++)
+        sem_post(&sem_items);
+
     for (int i = 0; i < NUM_CONSUMERS; ++i)
         pthread_join(consumers[i], NULL);
 
@@ -162,9 +155,9 @@ int main() {
         free(temp);
     }
 
-    printf("Alle Threads beendet. Programm fertig.\n\n");
-
+    printf("\nAlle Threads beendet. Programm fertig.\n");
     printf("Summe produziert: %d\n", atomic_load(&werte_producers));
     printf("Summe consumiert: %d\n", atomic_load(&werte_consumers));
+
     return 0;
 }
