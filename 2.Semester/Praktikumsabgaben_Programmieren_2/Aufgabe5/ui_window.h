@@ -11,8 +11,8 @@ class MainWindow : public QMainWindow
 public:
     MainWindow()
     {
-        QIcon icon("../grid/thi_icon.png");
-        setWindowTitle("Grid");
+        QIcon icon("../Aufgabe5/thi_icon.png");
+        setWindowTitle("UFO");
         setWindowIcon(icon);
         //resize(200, 25);
         mainwidget = new MainWidget(this);
