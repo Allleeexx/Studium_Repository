@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <semaphore.h>
+#include <stdatomic.h>
+
 
 #define PRODUCE_COUNT 10
 #define NUM_PRODUCERS 2
@@ -19,6 +21,10 @@ Node* head = NULL;
 sem_t sem_items;
 sem_t sem_mutex;
 int active_producers = NUM_PRODUCERS;
+int list_length = 0;
+int werte_producers = 0;
+int werte_consumers = 0;
+
 
 // Collatz-Funktion (Dummy-Arbeit)
 void collatz(int n) {
@@ -39,6 +45,11 @@ void add_to_list(int value) {
     new_node->value = value;
     new_node->next = head;
     head = new_node;
+
+    atomic_fetch_add(&list_length, 1);
+    if(atomic_load(&list_length) > 5){
+        printf("Fehler. Listlength über 5");
+    }
 }
 
 int remove_from_list() {
@@ -63,6 +74,7 @@ int remove_from_list() {
     }
 
     free(current);
+    atomic_fetch_sub(&list_length, 1);
     return value;
 }
 
@@ -76,6 +88,7 @@ void* producer(void* arg) {
 
         sem_wait(&sem_mutex);
         add_to_list(value);
+        atomic_fetch_add(&werte_producers, value);
         sem_post(&sem_mutex);
         sem_post(&sem_items);
 
@@ -108,6 +121,7 @@ void* consumer(void* arg) {
             sem_post(&sem_mutex);
 
             collatz(value);  // Simuliere Arbeit
+            atomic_fetch_add(&werte_consumers, value);
             printf("[Consumer %lu] Verarbeitet: %d\n", pthread_self(), value);
             sleep(rand() % 2);
         } else {
@@ -148,7 +162,9 @@ int main() {
         free(temp);
     }
 
-    printf("Alle Threads beendet. Programm fertig.\n");
+    printf("Alle Threads beendet. Programm fertig.\n\n");
 
+    printf("Summe produziert: %d\n", atomic_load(&werte_producers));
+    printf("Summe consumiert: %d\n", atomic_load(&werte_consumers));
     return 0;
 }
