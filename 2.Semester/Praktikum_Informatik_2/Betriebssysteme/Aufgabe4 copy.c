@@ -7,9 +7,9 @@
 #include <semaphore.h>
 #include <stdatomic.h>
 
-#define PRODUCE_COUNT 10
-#define NUM_PRODUCERS 2
-#define NUM_CONSUMERS 2
+#define PRODUCE_COUNT 10000        //Jeder producer produziert so viele Werte mal 
+#define NUM_PRODUCERS 50         //anazahl an producern
+#define NUM_CONSUMERS 30         //anzahl consumer
 
 typedef struct node {
     struct node* next;
@@ -75,7 +75,7 @@ void* producer(void* arg) {
 
     for (int i = 0; i < PRODUCE_COUNT; i++) {
         int value = get_random();
-        sleep(rand() % 2);
+        //sleep(rand() % 2);
 
         sem_wait(&sem_mutex);
         add_to_list(value);
@@ -113,7 +113,7 @@ void* consumer(void* arg) {
             collatz(value);  // Simuliere Arbeit
             atomic_fetch_add(&werte_consumers, value);
             printf("[Consumer %lu] Verarbeitet: %d\n", pthread_self(), value);
-            sleep(rand() % 2);
+         //   sleep(rand() % 2);
         } else {
             sem_post(&sem_mutex);
         }
