@@ -15,8 +15,10 @@ class MainWidget : public QWidget
     Q_OBJECT
 
 public:
-    MainWidget(QMainWindow *parent = nullptr): QWidget(parent)
-    {
+    MainWidget(QMainWindow *parent = nullptr): QWidget(parent){
+
+
+
         //eingabefelder
         edit_x = new QLineEdit();
         edit_y = new QLineEdit();
@@ -63,8 +65,7 @@ public:
         connect(start_button, SIGNAL(clicked()), this, SLOT(startUfo()));
     }
 
-    ~MainWidget()
-    {
+    ~MainWidget(){
         delete grid;
         delete edit_x;
         delete edit_y;
@@ -80,7 +81,7 @@ public:
 
 private slots:    
     void startUfo(){
-
+        start_button->
     }
 
 private:
