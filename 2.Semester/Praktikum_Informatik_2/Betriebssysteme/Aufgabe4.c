@@ -22,8 +22,8 @@ sem_t sem_items;
 sem_t sem_mutex;
 int active_producers = NUM_PRODUCERS;
 int list_length = 0;
-int werte_producers = 0;
-int werte_consumers = 0;
+atomic_int werte_producers = 0;
+atomic_int werte_consumers = 0;
 
 
 // Collatz-Funktion (Dummy-Arbeit)
@@ -48,7 +48,7 @@ void add_to_list(int value) {
 
     atomic_fetch_add(&list_length, 1);
     if(atomic_load(&list_length) > 5){
-        printf("Fehler. Listlength über 5");
+        printf("Fehler. Listlength über 5\n");
     }
 }
 
@@ -88,7 +88,7 @@ void* producer(void* arg) {
 
         sem_wait(&sem_mutex);
         add_to_list(value);
-        atomic_fetch_add(&werte_producers, value);
+        atomic_fetch_and_add(&werte_producers, value);
         sem_post(&sem_mutex);
         sem_post(&sem_items);
 
@@ -121,7 +121,7 @@ void* consumer(void* arg) {
             sem_post(&sem_mutex);
 
             collatz(value);  // Simuliere Arbeit
-            atomic_fetch_add(&werte_consumers, value);
+            atomic_fetch_and_add(&werte_consumers, value);
             printf("[Consumer %lu] Verarbeitet: %d\n", pthread_self(), value);
             sleep(rand() % 2);
         } else {
