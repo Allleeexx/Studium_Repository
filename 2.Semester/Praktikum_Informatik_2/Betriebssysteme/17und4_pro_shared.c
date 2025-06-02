@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/wait.h>
 #include <time.h>
@@ -22,40 +23,40 @@ int draw_card() {
 }
 
 void player_process(int player_id, struct SharedData *data) {
-    srand(getpid()); // eigene Seed für jeden Prozess
+    srand(getpid());
 
     while (1) {
-        // Warten bis neue Runde gestartet wird
         while (data->ready_flags[player_id] != 0 && !data->game_over)
             usleep(1000);
 
         if (data->game_over)
-            exit(0);
+            break;
 
         // Karten ziehen
         data->player_scores[player_id] = 0;
         while (data->player_scores[player_id] < 17)
             data->player_scores[player_id] += draw_card();
 
-        // Signal an Bank: Spieler ist fertig
+        // Spieler ist bereit
         data->ready_flags[player_id] = 1;
     }
+    exit(0);
 }
 
 int main() {
     int shm_id = shmget(IPC_PRIVATE, sizeof(struct SharedData), IPC_CREAT | 0666);
-    if (shm_id < 0) {
+    if (shm_id == -1) {
         perror("shmget");
         exit(1);
     }
 
-    struct SharedData *data = (struct SharedData*) shmat(shm_id, NULL, 0);
-    if (data == (void*) -1) {
+    struct SharedData *data = (struct SharedData *)shmat(shm_id, NULL, 0);
+    if (data == (void *)-1) {
         perror("shmat");
         exit(1);
     }
 
-    // Init shared data
+    // Initialisierung
     for (int i = 0; i < MAX_PLAYERS; i++) {
         data->player_scores[i] = 0;
         data->player_wins[i] = 0;
@@ -64,14 +65,14 @@ int main() {
     data->game_over = 0;
 
     int num_players;
-    printf("Anzahl der Spieler (2-%d): ", MAX_PLAYERS);
+    printf("Anzahl der Spieler (2–%d): ", MAX_PLAYERS);
     scanf("%d", &num_players);
     if (num_players < 2 || num_players > MAX_PLAYERS) {
         printf("Ungültige Spieleranzahl!\n");
         exit(1);
     }
 
-    // Spielerprozesse erzeugen
+    // Prozesse starten
     for (int i = 0; i < num_players; i++) {
         pid_t pid = fork();
         if (pid == 0) {
@@ -82,21 +83,22 @@ int main() {
 
     srand(time(NULL));
 
-    // Bankprozess (Elternprozess)
+    // Bank (Hauptprozess)
     while (!data->game_over) {
-        sleep(1); // kurze Pause
+        sleep(1);  // kurze Pause vor Runde
         printf("\n--- Neue Runde ---\n");
 
-        // Reset readiness
+        // Spieler freigeben
         for (int i = 0; i < num_players; i++)
             data->ready_flags[i] = 0;
 
-        // Bank zieht
+        // Bank zieht Karten
         data->bank_score = 0;
         while (data->bank_score < 17)
             data->bank_score += draw_card();
+        printf("Bank hat: %d\n", data->bank_score);
 
-        // Warten auf Spieler
+        // Warten auf alle Spieler
         int all_ready = 0;
         while (!all_ready) {
             all_ready = 1;
@@ -107,11 +109,11 @@ int main() {
             usleep(1000);
         }
 
-        // Ergebnisse anzeigen
-        printf("Bank hat: %d\n", data->bank_score);
+        // Auswertung
         for (int i = 0; i < num_players; i++) {
             int score = data->player_scores[i];
             printf("Spieler %d hat: %d\n", i + 1, score);
+
             if (score > MAX_SCORE) continue;
             if (data->bank_score > MAX_SCORE || score > data->bank_score)
                 data->player_wins[i]++;
@@ -120,18 +122,22 @@ int main() {
         // Spielstand
         for (int i = 0; i < num_players; i++) {
             printf("Spieler %d hat %d Siege\n", i + 1, data->player_wins[i]);
+        }
+
+        // Gewinner prüfen (nur erster zählt!)
+        for (int i = 0; i < num_players; i++) {
             if (data->player_wins[i] >= WIN_THRESHOLD) {
                 printf("\n🎉 Spieler %d hat das Spiel gewonnen! 🎉\n", i + 1);
                 data->game_over = 1;
+                break; // sofort beenden, nur einer gewinnt
             }
         }
     }
 
-    // Prozesse beenden
+    // Kindprozesse beenden
     for (int i = 0; i < num_players; i++)
         wait(NULL);
 
-    // Shared memory freigeben
     shmdt(data);
     shmctl(shm_id, IPC_RMID, NULL);
     printf("Spiel beendet.\n");
