@@ -6,12 +6,14 @@
 #include <functional>
 #include <utility>
 #include <thread>
-
+#include <QObject>
 
 #include "ufo.h"
-using namespace std; 
+using namespace std;
 
-class UfoThread{
+class UfoThread : public QObject{
+
+    Q_OBJECT
     private:
         thread* flyThread;      //Attribut flyThread ist pointer auf einen Thread
         Ufo* ufo;           //Pointer auf ein Objekt von Ballistic oder Vertical
@@ -23,6 +25,9 @@ class UfoThread{
         ~UfoThread();
         void startUfo(const float x, const float y, const float height, const int speed);
         bool getIsFlying();
+
+    signals:
+        void stopped(vector<float>);
 };
 
 #endif
