@@ -11,7 +11,7 @@ class MainWindow : public QMainWindow
 public:
     MainWindow()
     {
-        QIcon icon("../Aufgabe5/thi_icon.png");
+        QIcon icon("../thi_icon.png");
         setWindowTitle("UFO");
         setWindowIcon(icon);
         //resize(200, 25);

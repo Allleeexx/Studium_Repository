@@ -70,10 +70,10 @@ public:
 
         //Objekte anlegen
         ufo = new Ballistic("ufo1", 20.0, 20.0);
-        //uthread = new UfoThread(ufo);
+        uthread = new UfoThread(ufo);
 
         connect(start_button, SIGNAL(clicked()), this, SLOT(startUfo()));
-        connect(uthread, SIGNAL(stopped(vector<float>)), this, SLOT(updateWindow()));
+        connect(uthread, SIGNAL(stopped(vector<float>)), this, SLOT(updateWindow(vector<float>)));
     }
 
     ~MainWidget(){
@@ -89,7 +89,7 @@ public:
         delete text_height;
         delete text_speed;
         delete ufo;
-        //delete uthread;
+        delete uthread;
     }
 
 private slots:    
@@ -152,8 +152,8 @@ private slots:
         QString labelcontent;
         labelcontent += "Flight completed at\n";
         labelcontent += "Position:\n";
-        labelcontent += QString::number(pos[0], 'f',2) + "|"
-                        +  QString::number(pos[1], 'f', 2) + "|"
+        labelcontent += QString::number(pos[0], 'f',2) + " | "
+                        +  QString::number(pos[1], 'f', 2) + " | "
                         +  QString::number(pos[2], 'f', 2) + "meter";
         label->setText(labelcontent);
 
