@@ -19,9 +19,12 @@ typedef struct node {
 Node* head = NULL;
 sem_t sem_items;
 sem_t sem_mutex;
+sem_t sem_free;
 int active_producers = NUM_PRODUCERS;
 atomic_int werte_producers = 0;
 atomic_int werte_consumers = 0;
+atomic_int list_length = 0;
+
 
 // Collatz-Funktion (Dummy-Arbeit)
 void collatz(int n) {
@@ -42,6 +45,11 @@ void add_to_list(int value) {
     new_node->value = value;
     new_node->next = head;
     head = new_node;
+
+	 int len = atomic_fetch_add(&list_length, 1);
+	 if(len>5){
+		printf("Fehler: Mehr als 5 Elemente in Liste -> Aktuelle Laenge: %d\n", len);
+	}
 }
 
 int remove_from_list() {
@@ -66,6 +74,7 @@ int remove_from_list() {
     }
 
     free(current);
+    atomic_fetch_sub(&list_length, 1);
     return value;
 }
 
@@ -77,13 +86,15 @@ void* producer(void* arg) {
         int value = get_random();
         //sleep(rand() % 2);
 
+        sem_wait(&sem_free);
+
         sem_wait(&sem_mutex);
         add_to_list(value);
         atomic_fetch_add(&werte_producers, value);
         sem_post(&sem_mutex);
         sem_post(&sem_items);
 
-        printf("[Producer %lu] Produziert: %d\n", pthread_self(), value);
+//        printf("[Producer %lu] Produziert: %d\n", pthread_self(), value);
     }
 
     sem_wait(&sem_mutex);
@@ -109,10 +120,11 @@ void* consumer(void* arg) {
         if (head != NULL) {
             int value = remove_from_list();
             sem_post(&sem_mutex);
+            sem_post(&sem_free);
 
             collatz(value);  // Simuliere Arbeit
             atomic_fetch_add(&werte_consumers, value);
-            printf("[Consumer %lu] Verarbeitet: %d\n", pthread_self(), value);
+  //          printf("[Consumer %lu] Verarbeitet: %d\n", pthread_self(), value);
          //   sleep(rand() % 2);
         } else {
             sem_post(&sem_mutex);
@@ -128,6 +140,7 @@ int main() {
 
     sem_init(&sem_items, 0, 0);
     sem_init(&sem_mutex, 0, 1);
+    sem_init(&sem_free, 0, 5 );
 
     for (int i = 0; i < NUM_PRODUCERS; ++i)
         pthread_create(&producers[i], NULL, producer, NULL);
