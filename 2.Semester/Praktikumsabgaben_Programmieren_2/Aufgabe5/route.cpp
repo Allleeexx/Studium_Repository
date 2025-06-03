@@ -19,6 +19,13 @@ Route::~Route(){
     delete destinations;
 }
 
+Route::Route(Route&& route){
+    height = route.height;
+    dist = route.dist;
+    destinations = route.destinations;
+    route.destinations = nullptr;
+}
+
 void Route::add(const float destX, const float destY){
     pair<float, float> insert = {destX, destY};
     destinations->push_back(insert);

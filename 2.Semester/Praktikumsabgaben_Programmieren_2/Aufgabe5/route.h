@@ -15,6 +15,7 @@ class Route{
     public:
         Route(const float pHeight, function<float(float, float, float, float, float)> pDist);
         Route(const Route& route);                  //Copy Konstruktor
+        Route(Route&& route);
         ~Route();
         void add(const float destX, const float destY);             //Fügt Ziel hinten an destinations an
         const vector<pair<float, float>>& getDestinations() const;              //
