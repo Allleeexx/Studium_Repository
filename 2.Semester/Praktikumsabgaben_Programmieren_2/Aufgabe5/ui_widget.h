@@ -77,6 +77,8 @@ public:
     }
 
     ~MainWidget(){
+        delete uthread;
+        delete ufo;
         delete grid;
         delete edit_x;
         delete edit_y;
@@ -88,8 +90,6 @@ public:
         delete text_y;
         delete text_height;
         delete text_speed;
-        delete ufo;
-        delete uthread;
     }
 
 private slots:    
