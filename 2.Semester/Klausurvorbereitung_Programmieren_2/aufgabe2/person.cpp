@@ -20,5 +20,5 @@ void Person::print() const{
     cout << "Name: " <<name <<"\n";
     cout << "NachN: " <<firstName <<"\n";
     cout << "Date: " <<dateOfBirth.at(0)<<"."<<dateOfBirth.at(1)<<"."<<dateOfBirth.at(2) <<"\n";
-    cout << "Salary: " <<salary <<"\n\n\n";
+   // cout << "Salary: " <<salary <<"\n\n\n";
 }
