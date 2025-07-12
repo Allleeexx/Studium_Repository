@@ -44,7 +44,7 @@ void player_process(int player_id, struct SharedData *data) {
 }
 
 int main() {
-    int shm_id = shmget(IPC_PRIVATE, sizeof(struct SharedData), IPC_CREAT | 0666);
+    int shm_id = shmget(IPC_PRIVATE, sizeof(struct SharedData), IPC_CREAT | 0666);          //-> shmget = Fkt zum erstellen oder zugreifen auf shared memory  | IPC_Private = erstelle neues, Segment
     if (shm_id == -1) {
         perror("shmget");
         exit(1);
