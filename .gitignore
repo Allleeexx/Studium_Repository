@@ -144,3 +144,26 @@ ipch/
 
 # Visual Studio Trace Files
 *.e2e
+
+################################
+######## KART ESC MOTOR #######
+################################
+# Compiled C++ binaries
+kart_control
+kart_control_test
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Kart-specific log files
+kart_motor*.log
+
+# Hardware-specific calibration files
+calibration_*.dat
+motor_profiles_*.json
+
+# Configuration backup files
+*.ini.bak
+*.conf.bak
