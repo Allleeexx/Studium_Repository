@@ -2,8 +2,9 @@
 CAD.formats=
 CAD.pinconfig=
 CAD.provider=
-FREERTOS.IPParameters=Tasks01,Timers01
-FREERTOS.Tasks01=defaultTask,24,128,StartDefaultTask,Default,NULL,Dynamic,NULL,NULL
+FREERTOS.FootprintOK=true
+FREERTOS.IPParameters=Tasks01,Timers01,FootprintOK
+FREERTOS.Tasks01=defaultTask,24,128,StartDefaultTask,Default,NULL,Dynamic,NULL,NULL;Producer,8,128,StartTask02,Default,NULL,Dynamic,NULL,NULL;Consumer,8,128,StartTask03,Default,NULL,Dynamic,NULL,NULL
 FREERTOS.Timers01=myTimer01,Callback01,osTimerPeriodic,Default,NULL,Dynamic,NULL
 File.Version=6
 GPIO.groupedBy=Group By Peripherals
@@ -419,4 +420,4 @@ VP_USB_HOST_VS_USB_HOST_CDC_FS.Signal=USB_HOST_VS_USB_HOST_CDC_FS
 board=STM32F407G-DISC1
 boardIOC=true
 rtos.0.ip=FREERTOS
-isbadioc=true
+isbadioc=false
