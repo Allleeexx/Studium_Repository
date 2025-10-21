@@ -48,7 +48,6 @@ I2S_HandleTypeDef hi2s3;
 
 SPI_HandleTypeDef hspi1;
 
-TIM_HandleTypeDef htim6;
 TIM_HandleTypeDef htim7;
 
 /* Definitions for defaultTask */
@@ -74,7 +73,6 @@ static void MX_I2C1_Init(void);
 static void MX_I2S3_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_TIM7_Init(void);
-static void MX_TIM6_Init(void);
 void StartDefaultTask(void *argument);
 void Callback01(void *argument);
 
@@ -84,7 +82,7 @@ void Callback01(void *argument);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+	int count = 0;
 /* USER CODE END 0 */
 
 /**
@@ -123,7 +121,6 @@ int main(void)
   MX_I2S3_Init();
   MX_SPI1_Init();
   MX_TIM7_Init();
-  MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -333,44 +330,6 @@ static void MX_SPI1_Init(void)
 }
 
 /**
-  * @brief TIM6 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM6_Init(void)
-{
-
-  /* USER CODE BEGIN TIM6_Init 0 */
-
-  /* USER CODE END TIM6_Init 0 */
-
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
-
-  /* USER CODE BEGIN TIM6_Init 1 */
-
-  /* USER CODE END TIM6_Init 1 */
-  htim6.Instance = TIM6;
-  htim6.Init.Prescaler = 0;
-  htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim6.Init.Period = 65535;
-  htim6.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim6) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim6, &sMasterConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN TIM6_Init 2 */
-
-  /* USER CODE END TIM6_Init 2 */
-
-}
-
-/**
   * @brief TIM7 Initialization Function
   * @param None
   * @retval None
@@ -388,7 +347,7 @@ static void MX_TIM7_Init(void)
 
   /* USER CODE END TIM7_Init 1 */
   htim7.Instance = TIM7;
-  htim7.Init.Prescaler = 0;
+  htim7.Init.Prescaler = 83;
   htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim7.Init.Period = 65535;
   htim7.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
@@ -522,15 +481,18 @@ void StartDefaultTask(void *argument)
   /* init code for USB_HOST */
   MX_USB_HOST_Init();
   /* USER CODE BEGIN 5 */
-  osTimerStart(GPIO,);
+  osTimerStart(myTimer01Handle, 500);
+  //HAL_TIM_Base_Start_IT(&htim7);
+  HAL_TIM_Base_Start_IT(&htim7);
   /* Infinite loop */
   for(;;)
   {
 
-	  while(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0)){
-		  osDelay(500);
-	  	  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
-	  }
+	  if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0)){
+	  	  	  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+	  	  }
+	  osDelay(500);
+
   }
   /* USER CODE END 5 */
 }
@@ -540,7 +502,36 @@ void Callback01(void *argument)
 {
   /* USER CODE BEGIN Callback01 */
 
+		//HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
+
   /* USER CODE END Callback01 */
+}
+
+/**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM6 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* USER CODE BEGIN Callback 0 */
+
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM6)
+  {
+    HAL_IncTick();
+  }
+  /* USER CODE BEGIN Callback 1 */
+  	  if(htim->Instance == TIM6){
+  		  count++;
+  		  if((count%1000)==0){
+  			  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
+  		  }
+  	  }
+  /* USER CODE END Callback 1 */
 }
 
 /**
