@@ -23,12 +23,20 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "stdio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+typedef enum{
+	MSG_BUTTON,
+	MSG_AVERAGE
+}MessageType;
 
+typedef struct{
+	MessageType type;
+	uint32_t value;
+}DisplayMessage;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -46,6 +54,8 @@ I2C_HandleTypeDef hi2c1;
 
 I2S_HandleTypeDef hi2s3;
 
+RNG_HandleTypeDef hrng;
+
 SPI_HandleTypeDef hspi1;
 
 TIM_HandleTypeDef htim7;
@@ -57,26 +67,80 @@ const osThreadAttr_t defaultTask_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
-/* Definitions for Producer */
-osThreadId_t ProducerHandle;
-const osThreadAttr_t Producer_attributes = {
-  .name = "Producer",
+/* Definitions for producerTask */
+osThreadId_t producerTaskHandle;
+const osThreadAttr_t producerTask_attributes = {
+  .name = "producerTask",
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
-/* Definitions for Consumer */
-osThreadId_t ConsumerHandle;
-const osThreadAttr_t Consumer_attributes = {
-  .name = "Consumer",
+/* Definitions for consumerTask */
+osThreadId_t consumerTaskHandle;
+const osThreadAttr_t consumerTask_attributes = {
+  .name = "consumerTask",
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
+};
+/* Definitions for BonusTask1UserT */
+osThreadId_t BonusTask1UserTHandle;
+const osThreadAttr_t BonusTask1UserT_attributes = {
+  .name = "BonusTask1UserT",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
+/* Definitions for BonusTaskRandom */
+osThreadId_t BonusTaskRandomHandle;
+const osThreadAttr_t BonusTaskRandom_attributes = {
+  .name = "BonusTaskRandom",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
+/* Definitions for BonusTaskAuswer */
+osThreadId_t BonusTaskAuswerHandle;
+const osThreadAttr_t BonusTaskAuswer_attributes = {
+  .name = "BonusTaskAuswer",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
+/* Definitions for BoDisplayTas */
+osThreadId_t BoDisplayTasHandle;
+const osThreadAttr_t BoDisplayTas_attributes = {
+  .name = "BoDisplayTas",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
+/* Definitions for myQueue01 */
+osMessageQueueId_t myQueue01Handle;
+const osMessageQueueAttr_t myQueue01_attributes = {
+  .name = "myQueue01"
+};
+/* Definitions for evaluateQueue */
+osMessageQueueId_t evaluateQueueHandle;
+const osMessageQueueAttr_t evaluateQueue_attributes = {
+  .name = "evaluateQueue"
+};
+/* Definitions for displayQueue */
+osMessageQueueId_t displayQueueHandle;
+const osMessageQueueAttr_t displayQueue_attributes = {
+  .name = "displayQueue"
 };
 /* Definitions for myTimer01 */
 osTimerId_t myTimer01Handle;
 const osTimerAttr_t myTimer01_attributes = {
   .name = "myTimer01"
 };
+/* Definitions for myBinarySem01 */
+osSemaphoreId_t myBinarySem01Handle;
+const osSemaphoreAttr_t myBinarySem01_attributes = {
+  .name = "myBinarySem01"
+};
+/* Definitions for BonusSemaphore */
+osSemaphoreId_t BonusSemaphoreHandle;
+const osSemaphoreAttr_t BonusSemaphore_attributes = {
+  .name = "BonusSemaphore"
+};
 /* USER CODE BEGIN PV */
+
 
 /* USER CODE END PV */
 
@@ -87,9 +151,14 @@ static void MX_I2C1_Init(void);
 static void MX_I2S3_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_TIM7_Init(void);
+static void MX_RNG_Init(void);
 void StartDefaultTask(void *argument);
 void StartTask02(void *argument);
 void StartTask03(void *argument);
+void StartUserTasteTask(void *argument);
+void StartBonusTaskRandomGen(void *argument);
+void StartBonusTaskAuswertung(void *argument);
+void StartBoDisplay(void *argument);
 void Callback01(void *argument);
 
 /* USER CODE BEGIN PFP */
@@ -98,7 +167,9 @@ void Callback01(void *argument);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-	int count = 0;
+	uint32_t count = 0;
+	uint32_t sum = 0;
+	uint32_t average = 0;
 /* USER CODE END 0 */
 
 /**
@@ -137,8 +208,9 @@ int main(void)
   MX_I2S3_Init();
   MX_SPI1_Init();
   MX_TIM7_Init();
+  MX_RNG_Init();
   /* USER CODE BEGIN 2 */
-
+  LCD_Init();
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -147,6 +219,13 @@ int main(void)
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
+
+  /* Create the semaphores(s) */
+  /* creation of myBinarySem01 */
+  myBinarySem01Handle = osSemaphoreNew(1, 1, &myBinarySem01_attributes);
+
+  /* creation of BonusSemaphore */
+  BonusSemaphoreHandle = osSemaphoreNew(1, 1, &BonusSemaphore_attributes);
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
@@ -160,6 +239,16 @@ int main(void)
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
+  /* Create the queue(s) */
+  /* creation of myQueue01 */
+  myQueue01Handle = osMessageQueueNew (16, sizeof(uint16_t), &myQueue01_attributes);
+
+  /* creation of evaluateQueue */
+  evaluateQueueHandle = osMessageQueueNew (16, sizeof(uint16_t), &evaluateQueue_attributes);
+
+  /* creation of displayQueue */
+  displayQueueHandle = osMessageQueueNew (16, sizeof(uint16_t), &displayQueue_attributes);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
@@ -168,14 +257,27 @@ int main(void)
   /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
-  /* creation of Producer */
-  ProducerHandle = osThreadNew(StartTask02, NULL, &Producer_attributes);
+  /* creation of producerTask */
+  producerTaskHandle = osThreadNew(StartTask02, NULL, &producerTask_attributes);
 
-  /* creation of Consumer */
-  ConsumerHandle = osThreadNew(StartTask03, NULL, &Consumer_attributes);
+  /* creation of consumerTask */
+  consumerTaskHandle = osThreadNew(StartTask03, NULL, &consumerTask_attributes);
+
+  /* creation of BonusTask1UserT */
+  BonusTask1UserTHandle = osThreadNew(StartUserTasteTask, NULL, &BonusTask1UserT_attributes);
+
+  /* creation of BonusTaskRandom */
+  BonusTaskRandomHandle = osThreadNew(StartBonusTaskRandomGen, NULL, &BonusTaskRandom_attributes);
+
+  /* creation of BonusTaskAuswer */
+  BonusTaskAuswerHandle = osThreadNew(StartBonusTaskAuswertung, NULL, &BonusTaskAuswer_attributes);
+
+  /* creation of BoDisplayTas */
+  BoDisplayTasHandle = osThreadNew(StartBoDisplay, NULL, &BoDisplayTas_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
+
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -310,6 +412,32 @@ static void MX_I2S3_Init(void)
   /* USER CODE BEGIN I2S3_Init 2 */
 
   /* USER CODE END I2S3_Init 2 */
+
+}
+
+/**
+  * @brief RNG Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_RNG_Init(void)
+{
+
+  /* USER CODE BEGIN RNG_Init 0 */
+
+  /* USER CODE END RNG_Init 0 */
+
+  /* USER CODE BEGIN RNG_Init 1 */
+
+  /* USER CODE END RNG_Init 1 */
+  hrng.Instance = RNG;
+  if (HAL_RNG_Init(&hrng) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN RNG_Init 2 */
+
+  /* USER CODE END RNG_Init 2 */
 
 }
 
@@ -521,7 +649,7 @@ void StartDefaultTask(void *argument)
 
 /* USER CODE BEGIN Header_StartTask02 */
 /**
-* @brief Function implementing the Producer thread.
+* @brief Function implementing the producerTask thread.
 * @param argument: Not used
 * @retval None
 */
@@ -529,17 +657,34 @@ void StartDefaultTask(void *argument)
 void StartTask02(void *argument)
 {
   /* USER CODE BEGIN StartTask02 */
+	//producer
   /* Infinite loop */
+
   for(;;)
   {
-    osDelay(1);
+    for(uint32_t i=1; i<=10; i++){
+    	uint32_t value;
+    	HAL_RNG_GenerateRandomNumber(&hrng, &value);
+    	value = value%100;
+    	osMessageQueuePut(myQueue01Handle, &value, 0, osWaitForever);
+    	osDelay(100);
+    }
+
+    uint32_t zero = 0;
+    osMessageQueuePut(myQueue01Handle, &zero, 0, osWaitForever);
+
+    //warten bis Consumer Ergebnis fertig
+    osSemaphoreAcquire(myBinarySem01Handle, osWaitForever);
+    //printf("Mittelwert: %.2f\r\n", average);
+
+    osDelay(200);
   }
   /* USER CODE END StartTask02 */
 }
 
 /* USER CODE BEGIN Header_StartTask03 */
 /**
-* @brief Function implementing the Consumer thread.
+* @brief Function implementing the consumerTask thread.
 * @param argument: Not used
 * @retval None
 */
@@ -547,12 +692,148 @@ void StartTask02(void *argument)
 void StartTask03(void *argument)
 {
   /* USER CODE BEGIN StartTask03 */
+	//consumer
   /* Infinite loop */
+	for(;;)
+	{
+	    uint32_t value;
+	    if(osMessageQueueGet(myQueue01Handle, &value, NULL, osWaitForever) == osOK)
+	    {
+	        if(value == 0)
+	        {
+	            if(count > 0)
+	                average = (float)sum / count;
+	            else
+	                average = 0.0f;
+
+	            sum = 0;
+	            count = 0;
+	            osSemaphoreRelease(myBinarySem01Handle);
+	        }
+	        else
+	        {
+	            sum += value;
+	            count++;
+	        }
+	    }
+	}
+
+  /* USER CODE END StartTask03 */
+}
+
+/* USER CODE BEGIN Header_StartUserTasteTask */
+/**
+* @brief Function implementing the BonusTask1UserT thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartUserTasteTask */
+void StartUserTasteTask(void *argument)
+{
+  /* USER CODE BEGIN StartUserTasteTask */
+  /* Infinite loop */
+	for(;;)
+	  {
+	    uint8_t buttonState = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0);
+	    DisplayMessage msg ={MSG_BUTTON, buttonState};
+	    osMessageQueuePut(displayQueueHandle, &msg, 0,0);
+	  }
+	    osDelay(100);
+  /* USER CODE END StartUserTasteTask */
+}
+
+/* USER CODE BEGIN Header_StartBonusTaskRandomGen */
+/**
+* @brief Function implementing the BonusTaskRandom thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartBonusTaskRandomGen */
+void StartBonusTaskRandomGen(void *argument)
+{
+  /* USER CODE BEGIN StartBonusTaskRandomGen */
+	uint32_t randomValue =0;
+		/* Infinite loop */
+	  for(;;)
+	  {
+	    HAL_RNG_GenerateRandomNumber (&hrng, &randomValue);
+	    randomValue = randomValue %100;
+	    osMessageQueuePut(evaluateQueueHandle, &randomValue, 0,0);
+	  }
+	  osDelay(1000);
+  /* USER CODE END StartBonusTaskRandomGen */
+}
+
+/* USER CODE BEGIN Header_StartBonusTaskAuswertung */
+/**
+* @brief Function implementing the BonusTaskAuswer thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartBonusTaskAuswertung */
+void StartBonusTaskAuswertung(void *argument)
+{
+  /* USER CODE BEGIN StartBonusTaskAuswertung */
+	uint32_t buffer[5];
+	uint32_t index =0;
+	/* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    uint32_t value;
+    if(osMessageQueueGet(evaluateQueueHandle, &value, NULL, osWaitForever) == osOK){
+    	buffer[index++] = value;
+    	if(index >=5){
+    		uint32_t sum =0;
+    		for(uint8_t i=0; i<5; i++){
+    			sum += buffer[i];
+    		}
+    		uint32_t avg = sum/5;
+
+    		DisplayMessage msg = {MSG_AVERAGE, avg};
+    		osMessageQueuePut(displayQueueHandle, &msg, 0, 0);
+
+    		index = 0;
+    	}
+    }
   }
-  /* USER CODE END StartTask03 */
+  /* USER CODE END StartBonusTaskAuswertung */
+}
+
+/* USER CODE BEGIN Header_StartBoDisplay */
+/**
+* @brief Function implementing the BoDisplayTas thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartBoDisplay */
+void StartBoDisplay(void *argument)
+{
+  /* USER CODE BEGIN StartBoDisplay */
+  DisplayMessage msg;
+  LCD_ClearDisplay(0x0000);
+	/* Infinite loop */
+  for(;;)
+  {
+    if(osMessageQueueGet(displayQueueHandle, &msg, NULL, osWaitForever) == osOK){
+    	osSemaphoreAcquire(BonusSemaphoreHandle, osWaitForever);
+    	switch(msg.type){
+    	case MSG_BUTTON:
+    		if (msg.value == GPIO_PIN_RESET)
+    			LCD_WriteString(10, 20, 0xFFFF, 0x0000, "Button: Pressed");
+    		else
+    			LCD_WriteString(10, 20, 0xFFFF, 0x0000, "Button: Not Pressed");
+    		break;
+    	case MSG_AVERAGE:
+    		char text[32];
+    		sprintf(text, "Mittelwert: %lu", msg.value);
+    		LCD_WriteString(10, 20, 0xFFFF, 0x0000, text);
+    		break;
+    	}
+    }
+  }
+
+  osSemaphoreRelease(BonusSemaphoreHandle);
+  /* USER CODE END StartBoDisplay */
 }
 
 /* Callback01 function */
