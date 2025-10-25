@@ -737,8 +737,9 @@ void StartUserTasteTask(void *argument)
 	    uint8_t buttonState = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0);
 	    DisplayMessage msg ={MSG_BUTTON, buttonState};
 	    osMessageQueuePut(displayQueueHandle, &msg, 0,0);
-	  }
 	    osDelay(100);
+	  }
+
   /* USER CODE END StartUserTasteTask */
 }
 
@@ -829,10 +830,11 @@ void StartBoDisplay(void *argument)
     		LCD_WriteString(10, 20, 0xFFFF, 0x0000, text);
     		break;
     	}
+    	osSemaphoreRelease(BonusSemaphoreHandle);
     }
   }
 
-  osSemaphoreRelease(BonusSemaphoreHandle);
+
   /* USER CODE END StartBoDisplay */
 }
 
