@@ -24,13 +24,15 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "stdio.h"
+#include "display.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 typedef enum{
-	MSG_BUTTON,
-	MSG_AVERAGE
+  MSG_BUTTON,
+  MSG_AVERAGE,
+  MSG_ADC
 }MessageType;
 
 typedef struct{
@@ -159,6 +161,7 @@ void StartUserTasteTask(void *argument);
 void StartBonusTaskRandomGen(void *argument);
 void StartBonusTaskAuswertung(void *argument);
 void StartBoDisplay(void *argument);
+void StartBonusTaskAdc(void *argument);
 void Callback01(void *argument);
 
 /* USER CODE BEGIN PFP */
@@ -167,9 +170,10 @@ void Callback01(void *argument);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-	uint32_t count = 0;
+  uint32_t count = 0;
 	uint32_t sum = 0;
 	uint32_t average = 0;
+  volatile uint32_t ledBlinkCounter = 0;
 /* USER CODE END 0 */
 
 /**
@@ -241,13 +245,13 @@ int main(void)
 
   /* Create the queue(s) */
   /* creation of myQueue01 */
-  myQueue01Handle = osMessageQueueNew (16, sizeof(uint16_t), &myQueue01_attributes);
+  myQueue01Handle = osMessageQueueNew (16, sizeof(uint32_t), &myQueue01_attributes);
 
   /* creation of evaluateQueue */
-  evaluateQueueHandle = osMessageQueueNew (16, sizeof(uint16_t), &evaluateQueue_attributes);
+  evaluateQueueHandle = osMessageQueueNew (16, sizeof(uint32_t), &evaluateQueue_attributes);
 
   /* creation of displayQueue */
-  displayQueueHandle = osMessageQueueNew (16, sizeof(uint16_t), &displayQueue_attributes);
+  displayQueueHandle = osMessageQueueNew (16, sizeof(DisplayMessage), &displayQueue_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -274,6 +278,14 @@ int main(void)
 
   /* creation of BoDisplayTas */
   BoDisplayTasHandle = osThreadNew(StartBoDisplay, NULL, &BoDisplayTas_attributes);
+
+  /* creation of a simple ADC task (simulated via RNG to keep it functional) */
+  static const osThreadAttr_t BonusTaskAdc_attributes = {
+    .name = "BonusTaskADC",
+    .stack_size = 128 * 4,
+    .priority = (osPriority_t) osPriorityLow,
+  };
+  (void)osThreadNew(StartBonusTaskAdc, NULL, &BonusTaskAdc_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -754,14 +766,14 @@ void StartBonusTaskRandomGen(void *argument)
 {
   /* USER CODE BEGIN StartBonusTaskRandomGen */
 	uint32_t randomValue =0;
-		/* Infinite loop */
-	  for(;;)
-	  {
-	    HAL_RNG_GenerateRandomNumber (&hrng, &randomValue);
-	    randomValue = randomValue %100;
-	    osMessageQueuePut(evaluateQueueHandle, &randomValue, 0,0);
-	  }
-	  osDelay(1000);
+    /* Infinite loop */
+    for(;;)
+    {
+      HAL_RNG_GenerateRandomNumber (&hrng, &randomValue);
+      randomValue = randomValue %100;
+      osMessageQueuePut(evaluateQueueHandle, &randomValue, 0,0);
+      osDelay(1000);
+    }
   /* USER CODE END StartBonusTaskRandomGen */
 }
 
@@ -800,6 +812,29 @@ void StartBonusTaskAuswertung(void *argument)
   /* USER CODE END StartBonusTaskAuswertung */
 }
 
+/* USER CODE BEGIN Header_StartBonusTaskAdc */
+/**
+* @brief Simple ADC task (simulated using RNG) sending values to display
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartBonusTaskAdc */
+void StartBonusTaskAdc(void *argument)
+{
+  /* USER CODE BEGIN StartBonusTaskAdc */
+  uint32_t val;
+  for(;;)
+  {
+    // Simulate a 12-bit ADC reading
+    HAL_RNG_GenerateRandomNumber(&hrng, &val);
+    val &= 0xFFF; // 0..4095
+    DisplayMessage msg = {MSG_ADC, val};
+    osMessageQueuePut(displayQueueHandle, &msg, 0, 0);
+    osDelay(200);
+  }
+  /* USER CODE END StartBonusTaskAdc */
+}
+
 /* USER CODE BEGIN Header_StartBoDisplay */
 /**
 * @brief Function implementing the BoDisplayTas thread.
@@ -819,16 +854,23 @@ void StartBoDisplay(void *argument)
     	osSemaphoreAcquire(BonusSemaphoreHandle, osWaitForever);
     	switch(msg.type){
     	case MSG_BUTTON:
-    		if (msg.value == GPIO_PIN_RESET)
-    			LCD_WriteString(10, 20, 0xFFFF, 0x0000, "Button: Pressed");
-    		else
-    			LCD_WriteString(10, 20, 0xFFFF, 0x0000, "Button: Not Pressed");
+      if (msg.value)
+        LCD_WriteString(10, 20, 0xFFFF, 0x0000, "Button: Pressed     ");
+      else
+        LCD_WriteString(10, 20, 0xFFFF, 0x0000, "Button: Not Pressed");
     		break;
     	case MSG_AVERAGE:
-    		char text[32];
-    		sprintf(text, "Mittelwert: %lu", msg.value);
-    		LCD_WriteString(10, 20, 0xFFFF, 0x0000, text);
+      char text[32];
+      sprintf(text, "Mittelwert: %3lu   ", msg.value);
+      LCD_WriteString(10, 40, 0xFFFF, 0x0000, text);
     		break;
+    	case MSG_ADC:
+      {
+        char adcText[32];
+        sprintf(adcText, "ADC: %4lu    ", msg.value);
+        LCD_WriteString(10, 60, 0xFFFF, 0x0000, adcText);
+      }
+      break;
     	}
     	osSemaphoreRelease(BonusSemaphoreHandle);
     }
@@ -866,9 +908,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
-  	  if(htim->Instance == TIM6){
-  		  count++;
-  		  if((count%1000)==0){
+    if(htim->Instance == TIM7){
+      ledBlinkCounter++;
+      if((ledBlinkCounter%1000)==0){
   			  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
   		  }
   	  }
