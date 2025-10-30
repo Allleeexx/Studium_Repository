@@ -885,7 +885,7 @@ void Callback01(void *argument)
 {
   /* USER CODE BEGIN Callback01 */
 
-		//HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
 
   /* USER CODE END Callback01 */
 }
@@ -908,7 +908,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
-    if(htim->Instance == TIM7){
+    if(htim->Instance == TIM7){	//TIM6 für hardwareTimerb
       ledBlinkCounter++;
       if((ledBlinkCounter%1000)==0){
   			  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
