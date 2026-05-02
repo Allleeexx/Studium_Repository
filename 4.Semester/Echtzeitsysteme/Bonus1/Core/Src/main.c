@@ -27,11 +27,58 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+typedef struct
+{
+  osThreadId_t handle;
+  osSemaphoreId_t sem;
+  uint32_t periodMs;
+  uint32_t relativeDeadlineUs;
+  uint32_t execTimeUs;
+  uint16_t ledPin;
+
+  volatile uint32_t releaseQueue[4];
+  volatile uint32_t deadlineQueue[4];
+  volatile uint8_t head;
+  volatile uint8_t tail;
+  volatile uint8_t jobs;
+  volatile uint8_t active;
+
+  volatile uint32_t activeReleaseCycle;
+  volatile uint32_t activeDeadlineUs;
+  volatile uint32_t nextReleaseMs;
+  volatile uint32_t queueOverflows;
+
+  volatile uint32_t *deadlineMiss;
+  volatile uint32_t *responseUs;
+  volatile uint32_t *responseMaxUs;
+} EdfTask;
 
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define TaskA_PERIOD_MS      3U
+#define TaskA_DEADLINE_MS    3U
+#define TaskA_EXEC_TIME_US   1000U
+
+#define TaskB_PERIOD_MS      5U
+#define TaskB_DEADLINE_MS    4U
+#define TaskB_EXEC_TIME_US   2000U
+
+#define TaskC_PERIOD_MS      8U
+#define TaskC_DEADLINE_MS    8U
+#define TaskC_EXEC_TIME_US   1000U
+
+#define TaskD_PERIOD_MS      14U
+#define TaskD_DEADLINE_MS    14U
+#define TaskD_EXEC_TIME_US   1000U
+
+#define EDF_TASK_COUNT       4U
+#define EDF_QUEUE_LEN        4U
+#define EDF_TASK_A           0U
+#define EDF_TASK_B           1U
+#define EDF_TASK_C           2U
+#define EDF_TASK_D           3U
 
 /* USER CODE END PD */
 
@@ -48,21 +95,21 @@ osThreadId_t TaskAHandle;
 const osThreadAttr_t TaskA_attributes = {
   .name = "TaskA",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityAboveNormal,
 };
 /* Definitions for TaskB */
 osThreadId_t TaskBHandle;
 const osThreadAttr_t TaskB_attributes = {
   .name = "TaskB",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for TaskC */
 osThreadId_t TaskCHandle;
 const osThreadAttr_t TaskC_attributes = {
   .name = "TaskC",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityBelowNormal,
 };
 /* Definitions for TaskD */
 osThreadId_t TaskDHandle;
@@ -76,14 +123,7 @@ osThreadId_t SchedTaskHandle;
 const osThreadAttr_t SchedTask_attributes = {
   .name = "SchedTask",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityLow,
-};
-/* Definitions for CheckAndActivat */
-osThreadId_t CheckAndActivatHandle;
-const osThreadAttr_t CheckAndActivat_attributes = {
-  .name = "CheckAndActivat",
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityHigh,
 };
 /* Definitions for semTaskA */
 osSemaphoreId_t semTaskAHandle;
@@ -118,9 +158,27 @@ void StartTaskB(void *argument);
 void StartTaskC(void *argument);
 void StartTaskD(void *argument);
 void StartSchedTask(void *argument);
-void StartCheckAndActivateTasks(void *argument);
 
 /* USER CODE BEGIN PFP */
+static void DWT_Init(void);
+void busy_delay(uint32_t us);
+static uint32_t CyclesToUs(uint32_t cycles);
+static uint8_t DeadlineMissed(uint32_t releaseCycle, uint32_t deadlineUs, volatile uint32_t *lastUs, volatile uint32_t *maxUs);
+static void EdfInit(void);
+static void EdfSetTask(uint32_t id, osThreadId_t handle, osSemaphoreId_t sem, uint32_t periodMs, uint32_t deadlineMs, uint32_t execTimeUs, uint16_t ledPin, volatile uint32_t *deadlineMiss, volatile uint32_t *responseUs, volatile uint32_t *responseMaxUs);
+static void EdfActivate(uint32_t id, uint32_t nowMs);
+static uint8_t EdfPopJob(uint32_t id);
+static uint8_t EdfTaskReady(uint32_t id);
+static uint32_t EdfTaskDeadline(uint32_t id);
+static void EdfUpdatePriorities(void);
+static void EdfWaitForJob(uint32_t id);
+static void EdfFinishJob(uint32_t id);
+static void EdfRunJob(uint32_t id);
+static void ActivateTaskA(void);
+static void ActivateTaskB(void);
+static void ActivateTaskC(void);
+static void ActivateTaskD(void);
+static void CheckAndActivateTasks_1MS(void);
 
 /* USER CODE END PFP */
 
@@ -130,6 +188,24 @@ volatile uint32_t deadlineMissA = 0;
 volatile uint32_t deadlineMissB = 0;
 volatile uint32_t deadlineMissC = 0;
 volatile uint32_t deadlineMissD = 0;
+
+volatile uint32_t responseTaskAUs = 0;
+volatile uint32_t responseTaskBUs = 0;
+volatile uint32_t responseTaskCUs = 0;
+volatile uint32_t responseTaskDUs = 0;
+volatile uint32_t responseTaskAMaxUs = 0;
+volatile uint32_t responseTaskBMaxUs = 0;
+volatile uint32_t responseTaskCMaxUs = 0;
+volatile uint32_t responseTaskDMaxUs = 0;
+
+static volatile uint32_t releaseTaskA = 0;
+static volatile uint32_t releaseTaskB = 0;
+static volatile uint32_t releaseTaskC = 0;
+static volatile uint32_t releaseTaskD = 0;
+
+static EdfTask edfTasks[EDF_TASK_COUNT];
+volatile uint32_t edfReadyMask = 0;
+volatile uint32_t edfCurrentOrder[EDF_TASK_COUNT] = {0};
 /* USER CODE END 0 */
 
 /**
@@ -163,6 +239,7 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
+  DWT_Init();
 
   /* USER CODE END 2 */
 
@@ -214,11 +291,9 @@ int main(void)
   /* creation of SchedTask */
   SchedTaskHandle = osThreadNew(StartSchedTask, NULL, &SchedTask_attributes);
 
-  /* creation of CheckAndActivat */
-  CheckAndActivatHandle = osThreadNew(StartCheckAndActivateTasks, NULL, &CheckAndActivat_attributes);
-
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
+  EdfInit();
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -305,9 +380,9 @@ static void MX_TIM7_Init(void)
 
   /* USER CODE END TIM7_Init 1 */
   htim7.Instance = TIM7;
-  htim7.Init.Prescaler = 0;
+  htim7.Init.Prescaler = 124;
   htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim7.Init.Period = 65535;
+  htim7.Init.Period = 99;
   htim7.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim7) != HAL_OK)
   {
@@ -470,89 +545,264 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-/*void TaskA(void * argument){
-	for(;;){
-		osSemaphoreAcquire(semTaskAHandle, osWaitForever);
-		uint32_t start = osKernelGetTickCount();
-
-		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
-		busy_delay(1000);
-		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
-
-		if(osKernelGetTickCount() - start > 3){
-			deadlineMissA++;
-		}
-	}
+static void DWT_Init(void)
+{
+  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+  DWT->CYCCNT = 0U;
+  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 }
 
-void TaskB(void * argument){
-	for(;;){
-		osSemaphoreAcquire(semTaskBHandle, osWaitForever);
-		uint32_t start = osKernelGetTickCount();
+void busy_delay(uint32_t us)
+{
+  const uint32_t cyclesPerUs = SystemCoreClock / 1000000U;
+  const uint32_t delayCycles = us * cyclesPerUs;
+  const uint32_t startCycles = DWT->CYCCNT;
 
-		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
-		busy_delay(2000);
-		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_RESET);
-
-		if(osKernelGetTickCount() - start > 4){
-            deadlineMissB++;
-		}
-	}
+  while ((uint32_t)(DWT->CYCCNT - startCycles) < delayCycles)
+  {
+    __NOP();
+  }
 }
 
-void TaskC(void * argument){
-	for(;;){
-	 	 osSemaphoreAcquire(semTaskCHandle, osWaitForever);
-	 	 uint32_t start = osKernelGetTickCount();
-
-	 	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
-	 			busy_delay(1000);
-	 	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
-
-	 	if(osKernelGetTickCount() - start > 8){
-	 		deadlineMissC++;
-	 	}
-	}
+static uint32_t CyclesToUs(uint32_t cycles)
+{
+  return cycles / (SystemCoreClock / 1000000U);
 }
 
-void TaskD(void * argument){
-	for(;;){
-	 	 osSemaphoreAcquire(semTaskDHandle, osWaitForever);
-	 	 uint32_t start = osKernelGetTickCount();
+static uint8_t DeadlineMissed(uint32_t releaseCycle, uint32_t deadlineUs, volatile uint32_t *lastUs, volatile uint32_t *maxUs)
+{
+  uint32_t responseUs = CyclesToUs(DWT->CYCCNT - releaseCycle);
+  *lastUs = responseUs;
 
-	 	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_SET);
-	 			busy_delay(2000);
-	 	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_RESET);
+  if (responseUs > *maxUs)
+  {
+    *maxUs = responseUs;
+  }
 
-
-	 	if(osKernelGetTickCount() - start > 14){
-	 		deadlineMissD++;
-	 	}
-	}
+  return (responseUs > deadlineUs) ? 1U : 0U;
 }
 
-
-void SchedulerTask(void){
-	next1MS = osKernelGetTickCount();
-	while(1){
-		next1MS += 1;
-		CheckAndActivateTasks_1MS;
-		osDelayUntil(next1MS;)
-	}
+static void EdfInit(void)
+{
+  EdfSetTask(EDF_TASK_A, TaskAHandle, semTaskAHandle, TaskA_PERIOD_MS, TaskA_DEADLINE_MS, TaskA_EXEC_TIME_US, GPIO_PIN_12, &deadlineMissA, &responseTaskAUs, &responseTaskAMaxUs);
+  EdfSetTask(EDF_TASK_B, TaskBHandle, semTaskBHandle, TaskB_PERIOD_MS, TaskB_DEADLINE_MS, TaskB_EXEC_TIME_US, GPIO_PIN_13, &deadlineMissB, &responseTaskBUs, &responseTaskBMaxUs);
+  EdfSetTask(EDF_TASK_C, TaskCHandle, semTaskCHandle, TaskC_PERIOD_MS, TaskC_DEADLINE_MS, TaskC_EXEC_TIME_US, GPIO_PIN_14, &deadlineMissC, &responseTaskCUs, &responseTaskCMaxUs);
+  EdfSetTask(EDF_TASK_D, TaskDHandle, semTaskDHandle, TaskD_PERIOD_MS, TaskD_DEADLINE_MS, TaskD_EXEC_TIME_US, GPIO_PIN_15, &deadlineMissD, &responseTaskDUs, &responseTaskDMaxUs);
 }
 
-void CheckAndActivateTasks_1MS(void) {
- static uint32_t ms_cnt = 0;
- // check periods of the tasks
- if ( ms_cnt % 3 == 0 ) ActivateTask( TaskA );
- if ( ms_cnt % 6 == 0 ) ActivateTask( TaskB );
- if ( ms_cnt % 8 == 0 ) ActivateTask( TaskC );
- if ( ms_cnt % 14 == 0 ) ActivateTask( TaskD );
- ms_cnt++;
- return;
+static void EdfSetTask(uint32_t id, osThreadId_t handle, osSemaphoreId_t sem, uint32_t periodMs, uint32_t deadlineMs, uint32_t execTimeUs, uint16_t ledPin, volatile uint32_t *deadlineMiss, volatile uint32_t *responseUs, volatile uint32_t *responseMaxUs)
+{
+  edfTasks[id].handle = handle;
+  edfTasks[id].sem = sem;
+  edfTasks[id].periodMs = periodMs;
+  edfTasks[id].relativeDeadlineUs = deadlineMs * 1000U;
+  edfTasks[id].execTimeUs = execTimeUs;
+  edfTasks[id].ledPin = ledPin;
+  edfTasks[id].head = 0U;
+  edfTasks[id].tail = 0U;
+  edfTasks[id].jobs = 0U;
+  edfTasks[id].active = 0U;
+  edfTasks[id].activeReleaseCycle = 0U;
+  edfTasks[id].activeDeadlineUs = 0U;
+  edfTasks[id].nextReleaseMs = periodMs;
+  edfTasks[id].queueOverflows = 0U;
+  edfTasks[id].deadlineMiss = deadlineMiss;
+  edfTasks[id].responseUs = responseUs;
+  edfTasks[id].responseMaxUs = responseMaxUs;
 }
 
-*/
+static void EdfActivate(uint32_t id, uint32_t nowMs)
+{
+  EdfTask *task = &edfTasks[id];
+  uint32_t primask = __get_PRIMASK();
+  uint32_t releaseCycle = DWT->CYCCNT;
+  uint32_t absoluteDeadlineUs = CyclesToUs(releaseCycle) + task->relativeDeadlineUs;
+
+  __disable_irq();
+  task->nextReleaseMs = nowMs + task->periodMs;
+
+  if (task->jobs < EDF_QUEUE_LEN)
+  {
+    task->releaseQueue[task->tail] = releaseCycle;
+    task->deadlineQueue[task->tail] = absoluteDeadlineUs;
+    task->tail = (task->tail + 1U) % EDF_QUEUE_LEN;
+    task->jobs++;
+  }
+  else
+  {
+    task->queueOverflows++;
+    (*task->deadlineMiss)++;
+  }
+
+  if (primask == 0U)
+  {
+    __enable_irq();
+  }
+
+  (void)osSemaphoreRelease(task->sem);
+  EdfUpdatePriorities();
+}
+
+static uint8_t EdfPopJob(uint32_t id)
+{
+  EdfTask *task = &edfTasks[id];
+  uint32_t primask = __get_PRIMASK();
+  uint8_t jobFound = 0U;
+
+  __disable_irq();
+  if (task->jobs > 0U)
+  {
+    task->activeReleaseCycle = task->releaseQueue[task->head];
+    task->activeDeadlineUs = task->deadlineQueue[task->head];
+    task->head = (task->head + 1U) % EDF_QUEUE_LEN;
+    task->jobs--;
+    task->active = 1U;
+    jobFound = 1U;
+  }
+
+  if (primask == 0U)
+  {
+    __enable_irq();
+  }
+
+  return jobFound;
+}
+
+static uint8_t EdfTaskReady(uint32_t id)
+{
+  return ((edfTasks[id].active != 0U) || (edfTasks[id].jobs > 0U)) ? 1U : 0U;
+}
+
+static uint32_t EdfTaskDeadline(uint32_t id)
+{
+  EdfTask *task = &edfTasks[id];
+
+  if (task->active != 0U)
+  {
+    return task->activeDeadlineUs;
+  }
+
+  if (task->jobs > 0U)
+  {
+    return task->deadlineQueue[task->head];
+  }
+
+  return 0xFFFFFFFFU;
+}
+
+static void EdfUpdatePriorities(void)
+{
+  const osPriority_t prio[EDF_TASK_COUNT] = { osPriorityAboveNormal, osPriorityNormal, osPriorityBelowNormal, osPriorityLow };
+  uint8_t used[EDF_TASK_COUNT] = {0};
+  uint32_t rank;
+  uint32_t i;
+
+  edfReadyMask = 0U;
+  for (i = 0U; i < EDF_TASK_COUNT; i++)
+  {
+    edfCurrentOrder[i] = 0xFFFFFFFFU;
+    if (EdfTaskReady(i))
+    {
+      edfReadyMask |= (1U << i);
+    }
+    else
+    {
+      (void)osThreadSetPriority(edfTasks[i].handle, osPriorityLow);
+    }
+  }
+
+  for (rank = 0U; rank < EDF_TASK_COUNT; rank++)
+  {
+    uint32_t bestTask = 0xFFFFFFFFU;
+    uint32_t bestDeadline = 0xFFFFFFFFU;
+
+    for (i = 0U; i < EDF_TASK_COUNT; i++)
+    {
+      uint32_t deadline = EdfTaskDeadline(i);
+
+      if ((used[i] == 0U) && EdfTaskReady(i) && ((bestTask == 0xFFFFFFFFU) || ((int32_t)(deadline - bestDeadline) < 0)))
+      {
+        bestTask = i;
+        bestDeadline = deadline;
+      }
+    }
+
+    if (bestTask != 0xFFFFFFFFU)
+    {
+      used[bestTask] = 1U;
+      edfCurrentOrder[rank] = bestTask;
+      (void)osThreadSetPriority(edfTasks[bestTask].handle, prio[rank]);
+    }
+  }
+}
+
+static void EdfWaitForJob(uint32_t id)
+{
+  while (EdfPopJob(id) == 0U)
+  {
+    (void)osSemaphoreAcquire(edfTasks[id].sem, osWaitForever);
+  }
+}
+
+static void EdfFinishJob(uint32_t id)
+{
+  EdfTask *task = &edfTasks[id];
+
+  if (DeadlineMissed(task->activeReleaseCycle, task->relativeDeadlineUs, task->responseUs, task->responseMaxUs))
+  {
+    (*task->deadlineMiss)++;
+  }
+
+  task->active = 0U;
+  EdfUpdatePriorities();
+}
+
+static void EdfRunJob(uint32_t id)
+{
+  EdfTask *task = &edfTasks[id];
+
+  EdfWaitForJob(id);
+  HAL_GPIO_WritePin(GPIOD, task->ledPin, GPIO_PIN_SET);
+  busy_delay(task->execTimeUs);
+  HAL_GPIO_WritePin(GPIOD, task->ledPin, GPIO_PIN_RESET);
+  EdfFinishJob(id);
+}
+
+static void ActivateTaskA(void)
+{
+  releaseTaskA = DWT->CYCCNT;
+  EdfActivate(EDF_TASK_A, osKernelGetTickCount());
+}
+
+static void ActivateTaskB(void)
+{
+  releaseTaskB = DWT->CYCCNT;
+  EdfActivate(EDF_TASK_B, osKernelGetTickCount());
+}
+
+static void ActivateTaskC(void)
+{
+  releaseTaskC = DWT->CYCCNT;
+  EdfActivate(EDF_TASK_C, osKernelGetTickCount());
+}
+
+static void ActivateTaskD(void)
+{
+  releaseTaskD = DWT->CYCCNT;
+  EdfActivate(EDF_TASK_D, osKernelGetTickCount());
+}
+
+static void CheckAndActivateTasks_1MS(void)
+{
+  static uint32_t ms_cnt = 0U;
+
+  if ((ms_cnt % TaskA_PERIOD_MS) == 0U) { ActivateTaskA(); }
+  if ((ms_cnt % TaskB_PERIOD_MS) == 0U) { ActivateTaskB(); }
+  if ((ms_cnt % TaskC_PERIOD_MS) == 0U) { ActivateTaskC(); }
+  if ((ms_cnt % TaskD_PERIOD_MS) == 0U) { ActivateTaskD(); }
+
+  ms_cnt++;
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartTaskA */
@@ -565,19 +815,12 @@ void CheckAndActivateTasks_1MS(void) {
 void StartTaskA(void *argument)
 {
   /* USER CODE BEGIN 5 */
-  /* Infinite loop */
-	for(;;){
-			osSemaphoreAcquire(semTaskAHandle, osWaitForever);
-			uint32_t start = osKernelGetTickCount();
+  (void)argument;
 
-			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
-			busy_delay(1000);
-			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
-
-			if(osKernelGetTickCount() - start > 3){
-				deadlineMissA++;
-			}
-		}
+  for (;;)
+  {
+    EdfRunJob(EDF_TASK_A);
+  }
   /* USER CODE END 5 */
 }
 
@@ -591,19 +834,11 @@ void StartTaskA(void *argument)
 void StartTaskB(void *argument)
 {
   /* USER CODE BEGIN StartTaskB */
-  /* Infinite loop */
-  for(;;)
+  (void)argument;
+
+  for (;;)
   {
-	  osSemaphoreAcquire(semTaskBHandle, osWaitForever);
-	  		uint32_t start = osKernelGetTickCount();
-
-	  		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);
-	  		busy_delay(2000);
-	  		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_RESET);
-
-	  		if(osKernelGetTickCount() - start > 4){
-	              deadlineMissB++;
-	  		}
+    EdfRunJob(EDF_TASK_B);
   }
   /* USER CODE END StartTaskB */
 }
@@ -618,19 +853,11 @@ void StartTaskB(void *argument)
 void StartTaskC(void *argument)
 {
   /* USER CODE BEGIN StartTaskC */
-  /* Infinite loop */
-  for(;;)
+  (void)argument;
+
+  for (;;)
   {
-	  osSemaphoreAcquire(semTaskCHandle, osWaitForever);
-	  	 	 uint32_t start = osKernelGetTickCount();
-
-	  	 	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
-	  	 			busy_delay(1000);
-	  	 	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
-
-	  	 	if(osKernelGetTickCount() - start > 8){
-	  	 		deadlineMissC++;
-	  	 	}
+    EdfRunJob(EDF_TASK_C);
   }
   /* USER CODE END StartTaskC */
 }
@@ -645,20 +872,11 @@ void StartTaskC(void *argument)
 void StartTaskD(void *argument)
 {
   /* USER CODE BEGIN StartTaskD */
-  /* Infinite loop */
-  for(;;)
+  (void)argument;
+
+  for (;;)
   {
-	  osSemaphoreAcquire(semTaskDHandle, osWaitForever);
-	 	 	 uint32_t start = osKernelGetTickCount();
-
-	 	 	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_SET);
-	 	 			busy_delay(2000);
-	 	 	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_RESET);
-
-
-	 	 	if(osKernelGetTickCount() - start > 14){
-	 	 		deadlineMissD++;
-	 	 	}
+    EdfRunJob(EDF_TASK_D);
   }
   /* USER CODE END StartTaskD */
 }
@@ -673,35 +891,17 @@ void StartTaskD(void *argument)
 void StartSchedTask(void *argument)
 {
   /* USER CODE BEGIN StartSchedTask */
-  /* Infinite loop */
-  for(;;)
+  (void)argument;
+
+  uint32_t next1MS = osKernelGetTickCount();
+
+  for (;;)
   {
-	  next1MS = osKernelGetTickCount();
-	   while(1) {
-	   next1MS += 1; // eine Millisekunde hinzuzählen
-	   CheckAndActivateTasks_1MS();
-	   osDelayUntil( next1MS );
-	   }
+    next1MS += 1U;
+    CheckAndActivateTasks_1MS();
+    osDelayUntil(next1MS);
   }
   /* USER CODE END StartSchedTask */
-}
-
-/* USER CODE BEGIN Header_StartCheckAndActivateTasks */
-/**
-* @brief Function implementing the CheckAndActivat thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartCheckAndActivateTasks */
-void StartCheckAndActivateTasks(void *argument)
-{
-  /* USER CODE BEGIN StartCheckAndActivateTasks */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END StartCheckAndActivateTasks */
 }
 
 /**
