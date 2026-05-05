@@ -47,6 +47,7 @@ typedef struct
   volatile uint32_t activeDeadlineUs;
   volatile uint32_t nextReleaseMs;
   volatile uint32_t queueOverflows;
+  osPriority_t currentPriority;
 
   volatile uint32_t *deadlineMiss;
   volatile uint32_t *responseUs;
@@ -181,6 +182,7 @@ static void EdfActivate(uint32_t id, uint32_t nowMs);
 static uint8_t EdfPopJob(uint32_t id);
 static uint8_t EdfTaskReady(uint32_t id);
 static uint32_t EdfTaskDeadline(uint32_t id);
+static void EdfSetPriority(uint32_t id, osPriority_t priority);
 static void EdfUpdatePriorities(void);
 static void EdfWaitForJob(uint32_t id);
 static void EdfFinishJob(uint32_t id);
@@ -625,6 +627,7 @@ static void EdfSetTask(uint32_t id, osThreadId_t handle, osSemaphoreId_t sem, ui
   edfTasks[id].activeDeadlineUs = 0U;
   edfTasks[id].nextReleaseMs = periodMs;
   edfTasks[id].queueOverflows = 0U;
+  edfTasks[id].currentPriority = osPriorityNone;
   edfTasks[id].deadlineMiss = deadlineMiss;
   edfTasks[id].responseUs = responseUs;
   edfTasks[id].responseMaxUs = responseMaxUs;
@@ -659,7 +662,6 @@ static void EdfActivate(uint32_t id, uint32_t nowMs)
   }
 
   (void)osSemaphoreRelease(task->sem);
-  EdfUpdatePriorities();
 }
 
 static uint8_t EdfPopJob(uint32_t id)
@@ -682,6 +684,11 @@ static uint8_t EdfPopJob(uint32_t id)
   if (primask == 0U)
   {
     __enable_irq();
+  }
+
+  if (jobFound != 0U)
+  {
+    (void)osSemaphoreAcquire(task->sem, 0U);
   }
 
   return jobFound;
@@ -709,9 +716,20 @@ static uint32_t EdfTaskDeadline(uint32_t id)
   return 0xFFFFFFFFU;
 }
 
+static void EdfSetPriority(uint32_t id, osPriority_t priority)
+{
+  if (edfTasks[id].currentPriority != priority)
+  {
+    if (osThreadSetPriority(edfTasks[id].handle, priority) == osOK)
+    {
+      edfTasks[id].currentPriority = priority;
+    }
+  }
+}
+
 static void EdfUpdatePriorities(void)
 {
-  const osPriority_t prio[EDF_TASK_COUNT] = { osPriorityAboveNormal, osPriorityNormal, osPriorityBelowNormal, osPriorityLow };
+  const osPriority_t prio[EDF_TASK_COUNT] = { osPriorityAboveNormal, osPriorityNormal, osPriorityBelowNormal, osPriorityLow1 };
   uint8_t used[EDF_TASK_COUNT] = {0};
   uint32_t rank;
   uint32_t i;
@@ -726,7 +744,7 @@ static void EdfUpdatePriorities(void)
     }
     else
     {
-      (void)osThreadSetPriority(edfTasks[i].handle, osPriorityLow);
+      EdfSetPriority(i, osPriorityLow);
     }
   }
 
@@ -750,7 +768,7 @@ static void EdfUpdatePriorities(void)
     {
       used[bestTask] = 1U;
       edfCurrentOrder[rank] = bestTask;
-      (void)osThreadSetPriority(edfTasks[bestTask].handle, prio[rank]);
+      EdfSetPriority(bestTask, prio[rank]);
     }
   }
 }
@@ -814,11 +832,17 @@ static void ActivateTaskD(void)
 static void CheckAndActivateTasks_1MS(void)
 {
   static uint32_t ms_cnt = 0U;
+  uint8_t activated = 0U;
 
-  if ((ms_cnt % TaskA_PERIOD_MS) == 0U) { ActivateTaskA(); }
-  if ((ms_cnt % TaskB_PERIOD_MS) == 0U) { ActivateTaskB(); }
-  if ((ms_cnt % TaskC_PERIOD_MS) == 0U) { ActivateTaskC(); }
-  if ((ms_cnt % TaskD_PERIOD_MS) == 0U) { ActivateTaskD(); }
+  if ((ms_cnt % TaskA_PERIOD_MS) == 0U) { ActivateTaskA(); activated = 1U; }
+  if ((ms_cnt % TaskB_PERIOD_MS) == 0U) { ActivateTaskB(); activated = 1U; }
+  if ((ms_cnt % TaskC_PERIOD_MS) == 0U) { ActivateTaskC(); activated = 1U; }
+  if ((ms_cnt % TaskD_PERIOD_MS) == 0U) { ActivateTaskD(); activated = 1U; }
+
+  if (activated != 0U)
+  {
+    EdfUpdatePriorities();
+  }
 
   ms_cnt++;
 }
