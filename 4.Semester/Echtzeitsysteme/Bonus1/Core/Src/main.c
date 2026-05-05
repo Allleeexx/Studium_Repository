@@ -73,6 +73,9 @@ typedef struct
 #define TaskD_DEADLINE_MS    14U
 #define TaskD_EXEC_TIME_US   1000U
 
+#define CPU_LOAD_WINDOW_US   470000U
+#define CPU_LOAD_STEP_US     100U
+
 #define EDF_TASK_COUNT       4U
 #define EDF_QUEUE_LEN        4U
 #define EDF_TASK_A           0U
@@ -125,6 +128,13 @@ const osThreadAttr_t SchedTask_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityHigh,
 };
+/* Definitions for startDefaultTas */
+osThreadId_t startDefaultTasHandle;
+const osThreadAttr_t startDefaultTas_attributes = {
+  .name = "startDefaultTas",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
 /* Definitions for semTaskA */
 osSemaphoreId_t semTaskAHandle;
 const osSemaphoreAttr_t semTaskA_attributes = {
@@ -158,6 +168,7 @@ void StartTaskB(void *argument);
 void StartTaskC(void *argument);
 void StartTaskD(void *argument);
 void StartSchedTask(void *argument);
+void startDefaultTask(void *argument);
 
 /* USER CODE BEGIN PFP */
 static void DWT_Init(void);
@@ -197,6 +208,11 @@ volatile uint32_t responseTaskAMaxUs = 0;
 volatile uint32_t responseTaskBMaxUs = 0;
 volatile uint32_t responseTaskCMaxUs = 0;
 volatile uint32_t responseTaskDMaxUs = 0;
+
+volatile uint32_t cpuLoadPermille = 0;
+volatile uint32_t cpuIdlePermille = 0;
+volatile uint32_t cpuLoadMeasureUs = 0;
+volatile uint32_t cpuLoadIdleUs = 0;
 
 static volatile uint32_t releaseTaskA = 0;
 static volatile uint32_t releaseTaskB = 0;
@@ -290,6 +306,9 @@ int main(void)
 
   /* creation of SchedTask */
   SchedTaskHandle = osThreadNew(StartSchedTask, NULL, &SchedTask_attributes);
+
+  /* creation of startDefaultTas */
+  startDefaultTasHandle = osThreadNew(startDefaultTask, NULL, &startDefaultTas_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -902,6 +921,48 @@ void StartSchedTask(void *argument)
     osDelayUntil(next1MS);
   }
   /* USER CODE END StartSchedTask */
+}
+
+/* USER CODE BEGIN Header_startDefaultTask */
+/**
+* @brief Function implementing the startDefaultTas thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_startDefaultTask */
+void startDefaultTask(void *argument)
+{
+  /* USER CODE BEGIN startDefaultTask */
+  (void)argument;
+
+  uint32_t startCycles = DWT->CYCCNT;
+  uint32_t idleTimeUs = 0U;
+  const uint32_t cyclesPerUs = SystemCoreClock / 1000000U;
+
+  for(;;)
+  {
+    busy_delay(CPU_LOAD_STEP_US);
+    idleTimeUs += CPU_LOAD_STEP_US;
+
+    uint32_t measureTimeUs = (DWT->CYCCNT - startCycles) / cyclesPerUs;
+
+    if (measureTimeUs >= CPU_LOAD_WINDOW_US)
+    {
+      cpuLoadMeasureUs = measureTimeUs;
+      cpuLoadIdleUs = idleTimeUs;
+      cpuIdlePermille = (idleTimeUs * 1000U) / measureTimeUs;
+
+      if (cpuIdlePermille > 1000U)
+      {
+        cpuIdlePermille = 1000U;
+      }
+
+      cpuLoadPermille = 1000U - cpuIdlePermille;
+      idleTimeUs = 0U;
+      startCycles = DWT->CYCCNT;
+    }
+  }
+  /* USER CODE END startDefaultTask */
 }
 
 /**
