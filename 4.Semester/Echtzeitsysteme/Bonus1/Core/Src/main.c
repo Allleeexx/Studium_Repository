@@ -959,34 +959,56 @@ void startDefaultTask(void *argument)
   /* USER CODE BEGIN startDefaultTask */
   (void)argument;
 
-  uint32_t startCycles = DWT->CYCCNT;
-  uint32_t idleTimeUs = 0U;
-  const uint32_t cyclesPerUs = SystemCoreClock / 1000000U;
-
+  /* Messung erfolgt im FreeRTOS-Idle-Hook (vApplicationIdleHook),
+     diese Task darf NICHT mit den EDF-Tasks um CPU konkurrieren. */
   for(;;)
   {
-    busy_delay(CPU_LOAD_STEP_US);
-    idleTimeUs += CPU_LOAD_STEP_US;
-
-    uint32_t measureTimeUs = (DWT->CYCCNT - startCycles) / cyclesPerUs;
-
-    if (measureTimeUs >= CPU_LOAD_WINDOW_US)
-    {
-      cpuLoadMeasureUs = measureTimeUs;
-      cpuLoadIdleUs = idleTimeUs;
-      cpuIdlePermille = (idleTimeUs * 1000U) / measureTimeUs;
-
-      if (cpuIdlePermille > 1000U)
-      {
-        cpuIdlePermille = 1000U;
-      }
-
-      cpuLoadPermille = 1000U - cpuIdlePermille;
-      idleTimeUs = 0U;
-      startCycles = DWT->CYCCNT;
-    }
+    osDelay(osWaitForever);
   }
   /* USER CODE END startDefaultTask */
+}
+
+/* CPU-Lastmessung im echten FreeRTOS-Idle-Task.
+   Idle hat FreeRTOS-Prio 0, liegt also unter allen CMSIS-Tasks.
+   Damit ist die hier gemessene Zeit echte freie CPU-Zeit. */
+void vApplicationIdleHook(void)
+{
+  static uint8_t  initialized   = 0U;
+  static uint32_t startCycles   = 0U;
+  static uint32_t idleTimeUs    = 0U;
+  const  uint32_t cyclesPerUs   = SystemCoreClock / 1000000U;
+
+  if (initialized == 0U)
+  {
+    startCycles = DWT->CYCCNT;
+    idleTimeUs  = 0U;
+    initialized = 1U;
+  }
+
+  busy_delay(CPU_LOAD_STEP_US);
+  idleTimeUs += CPU_LOAD_STEP_US;
+
+  uint32_t measureTimeUs = (DWT->CYCCNT - startCycles) / cyclesPerUs;
+
+  if (measureTimeUs >= CPU_LOAD_WINDOW_US)
+  {
+    uint32_t idlePermille;
+
+    cpuLoadMeasureUs = measureTimeUs;
+    cpuLoadIdleUs    = idleTimeUs;
+
+    idlePermille = (idleTimeUs * 1000U) / measureTimeUs;
+    if (idlePermille > 1000U)
+    {
+      idlePermille = 1000U;
+    }
+
+    cpuIdlePermille = idlePermille;
+    cpuLoadPermille = 1000U - idlePermille;
+
+    idleTimeUs  = 0U;
+    startCycles = DWT->CYCCNT;
+  }
 }
 
 /**
