@@ -34,6 +34,12 @@ make
 
 Ergebnis: `build/taskset`.
 
+> Hinweis: Beim `cmake ..` wird `ptask` automatisch fuer neuere glibc
+> (>= 2.41, Ubuntu 26.04) gepatcht (`patch_ptask.py`). Ohne diesen Patch
+> bricht der Build mit *"redefinition of struct sched_attr"* ab, weil glibc
+> `sched_setattr`/`struct sched_attr` inzwischen selbst bereitstellt. Der
+> Patch ist idempotent und veraendert aeltere Systeme nicht.
+
 ## 4. Ausführen
 
 Echtzeit-Scheduling (SCHED_FIFO) und GPIO-Zugriff erfordern root:

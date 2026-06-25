@@ -21,6 +21,15 @@ if(NOT EXISTS ${PTASK_DIR}/ptask.c)
     "Bitte zuerst:  git clone https://github.com/glipari/ptask")
 endif()
 
+# ptask fuer neuere glibc (>= 2.41, Ubuntu 26.04) patchen: glibc liefert dort
+# 'struct sched_attr' / 'sched_setattr' selbst -> sonst Redefinition-Fehler.
+# Das Script ist idempotent und aendert aelteres glibc nicht.
+execute_process(
+  COMMAND python3 ${CMAKE_SOURCE_DIR}/patch_ptask.py ${PTASK_DIR}
+  RESULT_VARIABLE PTASK_PATCH_RES
+  OUTPUT_VARIABLE PTASK_PATCH_OUT)
+message(STATUS "patch_ptask: ${PTASK_PATCH_OUT}")
+
 file(GLOB PTASK_SRC ${PTASK_DIR}/*.c)
 # Tracing-Provider nur mit lttng noetig -> hier ausschliessen
 list(FILTER PTASK_SRC EXCLUDE REGEX "tpt_provider\\.c$")
