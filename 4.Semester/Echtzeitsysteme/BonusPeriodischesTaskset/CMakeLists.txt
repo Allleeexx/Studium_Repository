@@ -28,6 +28,16 @@ list(FILTER PTASK_SRC EXCLUDE REGEX "tpt_provider\\.c$")
 add_library(ptask STATIC ${PTASK_SRC})
 target_include_directories(ptask PUBLIC ${PTASK_DIR})
 
+# ptask ist aelterer C-Code. Neuere GCC-Versionen (>=14, Ubuntu 26.04) behandeln
+# implizite Funktionsdeklarationen u. ae. standardmaessig als FEHLER. Fuer die
+# Library wieder auf Warnung herabstufen, damit sie baut (betrifft nur ptask).
+target_compile_options(ptask PRIVATE
+  -Wno-error=implicit-function-declaration
+  -Wno-implicit-function-declaration
+  -Wno-error=implicit-int
+  -Wno-error=int-conversion
+  -Wno-error=incompatible-pointer-types)
+
 # --------------------------------------------------------------------------
 # Anwendung
 # --------------------------------------------------------------------------
